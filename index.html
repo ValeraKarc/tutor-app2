@@ -1,0 +1,2434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Репетитор" />
+<meta name="theme-color" content="#f3ede4" />
+<title>Кабинет репетитора</title>
+<style>
+  :root{
+    --bg:#f3ede4; --bg-2:#e8dfd2; --panel:#fbf7f0;
+    --ink:#3a332b; --ink-soft:#6b6154; --line:#d8cdbb;
+    --accent:#7a6a53; --accent-2:#5b4d3b;
+    --ok:#6b8e5a; --warn:#b07a4a; --danger:#a4574a;
+    --free:#7a8fa8; --bg-free:#e1e8ef;
+    --hint:#c9a24b;
+    --radius:12px; --shadow:0 2px 10px rgba(60,50,35,.08);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;line-height:1.45;overscroll-behavior-y:none}
+  body{padding-bottom:calc(72px + var(--safe-b))}
+
+  /* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+  header{background:linear-gradient(180deg,var(--bg-2),var(--bg));
+    border-bottom:1px solid var(--line);padding:12px 16px;
+    padding-top:calc(12px + var(--safe-t));
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    position:sticky;top:0;z-index:20}
+  header h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.3px}
+  .status{font-size:11px;color:var(--ink-soft);margin-left:auto;display:flex;gap:8px;align-items:center}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);display:inline-block}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
+
+  /* ===== ДЕСКТОП-НАВИГАЦИЯ (скрываем на мобильном) ===== */
+  nav.desktop{display:none;gap:6px;padding:12px 20px 0;flex-wrap:wrap}
+  nav.desktop button{background:transparent;border:1px solid transparent;color:var(--ink-soft);
+    padding:8px 14px;border-radius:999px;cursor:pointer;font-size:14px;transition:.15s;position:relative}
+  nav.desktop button:hover{background:var(--bg-2);color:var(--ink)}
+  nav.desktop button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  nav.desktop button .badge{display:inline-block;background:var(--danger);color:#fff;font-size:11px;
+    padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:top}
+
+  /* ===== МОБИЛЬНАЯ НИЖНЯЯ НАВИГАЦИЯ ===== */
+  nav.mobile{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:linear-gradient(180deg,var(--panel),var(--bg-2));
+    border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + var(--safe-b));
+    box-shadow:0 -4px 16px rgba(60,50,35,.06)}
+  nav.mobile button{
+    flex:1;background:transparent;border:none;color:var(--ink-soft);
+    padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;
+    font-size:10px;cursor:pointer;transition:.15s;border-radius:10px;
+    min-height:52px;justify-content:center;position:relative}
+  nav.mobile button .ic{font-size:20px;line-height:1;display:block}
+  nav.mobile button.active{color:var(--accent);background:rgba(122,106,83,.10)}
+  nav.mobile button .badge{position:absolute;top:2px;right:calc(50% - 18px);
+    background:var(--danger);color:#fff;font-size:10px;min-width:16px;height:16px;
+    padding:0 4px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+    font-weight:600}
+
+  /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+  main{padding:12px 12px 20px;max-width:1280px;margin:0 auto}
+  section{display:none} section.active{display:block}
+
+  /* ===== ПОДВКЛАДКИ ===== */
+  .subtabs{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);padding-bottom:8px;
+    overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .subtabs button{background:transparent;border:none;color:var(--ink-soft);
+    padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;
+    min-height:40px}
+  .subtabs button.active{background:var(--bg-2);color:var(--ink);font-weight:600}
+  .subpane{display:none} .subpane.active{display:block}
+
+  /* ===== ТУЛБАРЫ ===== */
+  .toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+  .toolbar input[type=text], .toolbar input[type=search], .toolbar input[type=date],
+  .toolbar input[type=time], .toolbar select{
+    padding:11px 12px;border-radius:var(--radius);border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);outline:none;font-family:inherit;font-size:16px;
+    min-height:44px}
+  /* iOS: 16px чтобы не было авто-зума */
+  .toolbar input[type=search], .toolbar input[type=text]{flex:1;min-width:140px}
+  .toolbar input:focus,.toolbar select:focus{border-color:var(--accent)}
+
+  .btn{background:var(--accent);color:#fff;border:none;padding:11px 16px;
+    border-radius:var(--radius);cursor:pointer;font-size:14px;transition:.15s;
+    min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .btn:active{background:var(--accent-2)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn.ghost:active{background:var(--bg-2)}
+  .btn.danger{background:transparent;border:1px solid var(--line);color:var(--danger)}
+  .btn.small{padding:8px 12px;font-size:13px;min-height:36px}
+
+  /* ===== КАРТОЧКИ ===== */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+    display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .card .grow{flex:1;min-width:180px}
+  .card h3{margin:0 0 4px;font-size:15px;font-weight:600;word-break:break-word}
+  .card .meta{font-size:13px;color:var(--ink-soft);word-break:break-word}
+  .tag{display:inline-block;background:var(--bg-2);color:var(--ink-soft);
+    padding:3px 10px;border-radius:999px;font-size:12px;margin:2px 4px 2px 0;white-space:nowrap}
+  .tag.paid{background:#e2ecd9;color:#4e6b3f}
+  .tag.unpaid{background:#f4e3df;color:#8a4a3f}
+  .tag.warn{background:#f6ead4;color:#7a5a2f}
+  .tag.free{background:var(--bg-free);color:#456;}
+  .tag.today{background:#f4e0c0;color:#7a5a2f}
+  .tag.series{background:#e6dff0;color:#5a4b74}
+
+  .empty{text-align:center;color:var(--ink-soft);padding:30px 16px;font-size:14px;
+    border:1px dashed var(--line);border-radius:var(--radius);background:var(--panel)}
+
+  /* ===== ТАБЛИЦЫ (на мобильном превращаются в карточки) ===== */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);
+    box-shadow:var(--shadow);background:var(--panel)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+    border-radius:var(--radius);overflow:hidden;font-size:14px;min-width:100%}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--bg-2);font-weight:600;color:var(--ink-soft);font-size:12px;
+    text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+
+  /* ===== СВОДКА ===== */
+  .summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:10px;margin-bottom:16px}
+  .sum-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;box-shadow:var(--shadow)}
+  .sum-card .label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px}
+  .sum-card .value{font-size:20px;font-weight:600;margin-top:4px;word-break:break-word}
+  .sum-card .value.ok{color:var(--ok)}
+  .sum-card .value.warn{color:var(--warn)}
+  .sum-card .value.small{font-size:15px}
+
+  /* ===== МОДАЛКА (шторка снизу на мобильном) ===== */
+  .modal-back{position:fixed;inset:0;background:rgba(40,33,24,.45);display:none;
+    align-items:flex-end;justify-content:center;padding:0;z-index:60;
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .modal-back.open{display:flex}
+  .modal{background:var(--panel);border-radius:16px 16px 0 0;padding:16px;
+    padding-bottom:calc(16px + var(--safe-b));
+    width:100%;max-width:780px;max-height:92vh;overflow:auto;
+    box-shadow:0 -10px 40px rgba(0,0,0,.25);
+    -webkit-overflow-scrolling:touch}
+  .modal h2{margin:0 0 12px;font-size:16px;
+    position:sticky;top:-16px;background:var(--panel);
+    padding:8px 0 10px;border-bottom:1px solid var(--line);z-index:1}
+
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:4px}
+  .field input, .field select, .field textarea{
+    width:100%;padding:12px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);font-family:inherit;font-size:16px;outline:none;
+    min-height:44px}
+  .field textarea{min-height:70px;resize:vertical}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;
+    position:sticky;bottom:-16px;background:var(--panel);padding:10px 0 4px;
+    border-top:1px solid var(--line);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+  .check-row{display:flex;align-items:center;gap:10px;padding:10px 0;min-height:44px}
+  .check-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent);flex-shrink:0}
+
+  /* ===== DETAILS ===== */
+  details.sync{background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:12px 14px;margin-bottom:12px}
+  details.sync summary{cursor:pointer;font-weight:600;font-size:14px;padding:6px 0;min-height:32px}
+  details.sync[open] summary{margin-bottom:8px}
+  details.sync p{font-size:13px;color:var(--ink-soft);margin:6px 0}
+  details.sync code{background:var(--bg-2);padding:1px 6px;border-radius:6px;font-size:12px;
+    word-break:break-all}
+
+  /* ===== МАТЕРИАЛЫ ===== */
+  .materials{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
+    gap:8px;margin-top:10px}
+  .material{background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:6px;text-align:center;font-size:11px;position:relative}
+  .material img{width:100%;height:80px;object-fit:cover;border-radius:6px;margin-bottom:6px;cursor:pointer}
+  .material .file-icon{font-size:28px;margin-bottom:6px}
+  .material .name{color:var(--ink-soft);word-break:break-word;line-height:1.2}
+  .material .del{position:absolute;top:-6px;right:-6px;background:#fff;
+    border:1px solid var(--line);border-radius:50%;width:26px;height:26px;cursor:pointer;
+    color:var(--danger);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow)}
+
+  /* ===== ПЕРИОД-БАР ===== */
+  .period-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .period-bar button{padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+    background:var(--panel);cursor:pointer;font-size:13px;color:var(--ink-soft);
+    min-height:38px}
+  .period-bar button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  /* ===== КАЛЕНДАРЬ ===== */
+  .calendar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .cal-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:70vh}
+  .cal-grid{display:grid;grid-template-columns:52px repeat(7,minmax(96px,1fr));min-width:740px}
+  .cal-grid > div{border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+    padding:5px;font-size:13px;min-height:56px}
+  .cal-head{background:var(--bg-2);font-weight:600;text-align:center;color:var(--ink-soft);
+    font-size:12px;text-transform:uppercase;letter-spacing:.4px;
+    position:sticky;top:0;z-index:2}
+  .cal-time{background:var(--bg-2);color:var(--ink-soft);text-align:right;font-size:12px;
+    padding-right:6px;display:flex;align-items:flex-start;justify-content:flex-end;
+    position:sticky;left:0;z-index:1}
+  .cal-cell{position:relative;min-height:56px;transition:background .15s}
+  .cal-cell.off{background:repeating-linear-gradient(45deg,#f0e9dc,#f0e9dc 6px,#e8dfd2 6px,#e8dfd2 12px)}
+  .cal-cell.dragover{background:#e8dcc4;outline:2px dashed var(--accent)}
+  .cal-slot{position:absolute;left:3px;right:3px;top:2px;
+    background:#d9e2d3;border:1px solid #b6c2ac;border-radius:6px;
+    padding:4px 6px;font-size:11px;line-height:1.25;cursor:pointer;overflow:hidden;
+    user-select:none}
+  .cal-slot.free{background:var(--bg-free);border-color:#b0bfcf;color:#345}
+  .cal-slot.unpaid{background:#f4e3df;border-color:#dfb7ae;color:#703a2f}
+  .cal-slot.dragging{opacity:.4}
+  .cal-slot b{display:block;font-size:11px;font-weight:600}
+  .cal-slot small{opacity:.75}
+  .cal-slot .flags{position:absolute;right:4px;top:3px;font-size:10px;letter-spacing:1px}
+  .cal-note{font-size:12px;color:var(--ink-soft);margin:6px 0 0}
+
+  /* ===== ГРАФИК РАБОТЫ ===== */
+  .schedule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:8px;margin-top:10px}
+  .sch-day{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .sch-day h4{margin:0 0 8px;font-size:13px;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.4px}
+  .sch-slot{display:flex;gap:6px;margin-bottom:6px;font-size:12px;align-items:center}
+  .sch-slot input[type=time]{padding:8px;font-size:14px;border:1px solid var(--line);
+    border-radius:6px;background:#fff;width:100%;min-height:40px}
+  .sch-slot .rm{background:none;border:none;color:var(--danger);cursor:pointer;font-size:20px;
+    padding:4px 8px;min-height:40px}
+
+  /* ===== ЛЕГЕНДА ===== */
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px;font-size:12px;color:var(--ink-soft)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:4px;border:1px solid var(--line)}
+  .legend i.paid{background:#d9e2d3;border-color:#b6c2ac}
+  .legend i.unpaid{background:#f4e3df;border-color:#dfb7ae}
+  .legend i.free{background:var(--bg-free);border-color:#b0bfcf}
+  .legend i.off{background:repeating-linear-gradient(45deg,#f0e9dc,#f0e9dc 4px,#e8dfd2 4px,#e8dfd2 8px)}
+
+  /* ===== ЧИПСЫ ДНЕЙ ===== */
+  .day-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{padding:9px 14px;border-radius:999px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;font-size:14px;color:var(--ink-soft);user-select:none;
+    transition:.15s;min-height:40px;display:inline-flex;align-items:center}
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .day-times{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px}
+  .day-time-row{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center;
+    padding:8px 0;border-bottom:1px dashed var(--line)}
+  .day-time-row:last-child{border-bottom:none}
+  .day-time-row .dname{font-weight:600;font-size:14px}
+  .day-time-row input{padding:9px;border:1px solid var(--line);border-radius:6px;
+    font-size:15px;background:#fff;width:100%;min-height:40px}
+
+  /* ===== КАЛЬКУЛЯТОР ===== */
+  .calc-box{background:#f7f1e6;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+  .calc-box .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .calc-box .field{margin-bottom:0}
+  .calc-result{display:flex;justify-content:space-between;align-items:center;
+    background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:10px;
+    flex-wrap:wrap;gap:6px}
+  .calc-result .lbl{font-size:13px;color:var(--ink-soft)}
+  .calc-result .val{font-size:18px;font-weight:600}
+  .calc-result .val .strike{color:var(--ink-soft);text-decoration:line-through;font-weight:400;
+    font-size:13px;margin-right:8px}
+
+  .disc-toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .disc-toggle button{background:#fff;border:none;padding:7px 14px;font-size:13px;
+    cursor:pointer;color:var(--ink-soft);min-height:36px}
+  .disc-toggle button.active{background:var(--accent);color:#fff}
+
+  /* ===== НАПОМИНАНИЯ ===== */
+  .hint{display:flex;gap:10px;align-items:flex-start;background:#fbf1dc;
+    border:1px solid #e8d6a4;border-left:4px solid var(--hint);
+    border-radius:10px;padding:12px 14px;margin-bottom:10px;flex-wrap:wrap}
+  .hint .grow{flex:1;min-width:160px}
+  .hint h4{margin:0 0 4px;font-size:14px;color:#6a5420;word-break:break-word}
+  .hint .meta{font-size:12px;color:#8a7435}
+
+  /* ===== БЛИЖАЙШИЕ ===== */
+  .upcoming-wrap{margin-bottom:18px}
+  .upcoming-group{margin-bottom:14px}
+  .upcoming-group h4{margin:0 0 8px;font-size:12px;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.4px}
+  .upcoming-group.overdue h4{color:var(--danger)}
+  .upcoming-lesson{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .upcoming-lesson .time{font-weight:600;min-width:110px;font-size:13px}
+  .upcoming-lesson .grow{flex:1;min-width:140px}
+  .upcoming-lesson.overdue{border-left:4px solid var(--danger)}
+  .upcoming-lesson.today{border-left:4px solid var(--hint);background:#fdf7e9}
+
+  /* ===== ФИЛЬТРЫ ===== */
+  .filters{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:10px;margin-bottom:12px;display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+  .filters .f{display:flex;flex-direction:column;gap:4px}
+  .filters label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px}
+  .filters select, .filters input{padding:10px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;font-family:inherit;font-size:15px;color:var(--ink);outline:none;
+    min-height:44px}
+  .filters select:focus,.filters input:focus{border-color:var(--accent)}
+  .filters .actions{display:flex;align-items:flex-end;gap:6px}
+
+  /* ===== ТОСТЫ ===== */
+  .toast-wrap{position:fixed;right:12px;bottom:calc(80px + var(--safe-b));
+    display:flex;flex-direction:column-reverse;gap:8px;
+    max-width:calc(100% - 24px);width:340px;z-index:100;pointer-events:none}
+  .toast{background:#fff;border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:10px;padding:10px 12px;box-shadow:0 6px 24px rgba(60,50,35,.16);
+    font-size:13px;color:var(--ink);pointer-events:auto;
+    display:flex;gap:10px;align-items:flex-start;
+    animation:slideIn .25s ease-out;
+    opacity:1;transition:opacity .3s, transform .3s}
+  .toast.hide{opacity:0;transform:translateX(20px)}
+  .toast .ic{font-size:16px;line-height:1.2;flex-shrink:0}
+  .toast .body{flex:1;line-height:1.35;word-break:break-word}
+  .toast .body b{display:block;margin-bottom:2px}
+  .toast .close{cursor:pointer;color:var(--ink-soft);font-size:20px;line-height:1;
+    background:none;border:none;padding:0 4px;min-width:24px;min-height:24px}
+  .toast.success{background:#e9f2e1;border-color:#c9dbb8;border-left-color:var(--ok);color:#3d5231}
+  .toast.error{background:#fae6e2;border-color:#ecc7c0;border-left-color:var(--danger);color:#6f3229}
+  .toast.info{background:#fbf3dd;border-color:#e8d6a4;border-left-color:var(--hint);color:#6a5420}
+  @keyframes slideIn{from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)}}
+
+  /* ===== ДЕСКТОП (шире 900px) ===== */
+  @media (min-width: 900px){
+    body{padding-bottom:0}
+    nav.mobile{display:none}
+    nav.desktop{display:flex}
+    main{padding:16px 20px 60px}
+    .modal-back{align-items:center;padding:20px}
+    .modal{border-radius:var(--radius);padding:20px;max-height:90vh}
+    .modal h2{position:static;background:transparent;padding:0;border:none;margin-bottom:14px}
+    .modal .actions{position:static;background:transparent;padding:0;border:none;
+      margin-left:0;margin-right:0;margin-top:16px}
+    .calc-box .calc-grid{grid-template-columns:1fr 1fr 1fr}
+    .cal-grid{grid-template-columns:60px repeat(7,1fr);min-width:900px}
+  }
+  @media (max-width: 500px){
+    .row2, .row3{grid-template-columns:1fr}
+    .summary-cards{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Кабинет репетитора</h1>
+  <div class="status">
+    <span class="dot" id="syncDot"></span>
+    <span id="syncText">локально</span>
+  </div>
+</header>
+
+<!-- ДЕСКТОПНАЯ НАВИГАЦИЯ -->
+<nav class="desktop">
+  <button data-tab="calendar">Календарь</button>
+  <button data-tab="students">Ученики</button>
+  <button data-tab="lessons" class="active">Занятия</button>
+  <button data-tab="payments">Оплаты</button>
+  <button data-tab="topics">Темы</button>
+  <button data-tab="summary">Сводка</button>
+  <button data-tab="money">Деньги и чеки</button>
+  <button data-tab="reminders">Напоминания <span class="badge" id="remBadgeD" style="display:none"></span></button>
+  <button data-tab="settings">Настройки</button>
+</nav>
+
+<main>
+  <section id="calendar" class="active">
+    <div class="toolbar">
+      <button class="btn ghost small" onclick="weekShift(-1)">← Пред.</button>
+      <button class="btn ghost small" onclick="weekShift(0)">Эта</button>
+      <button class="btn ghost small" onclick="weekShift(1)">След. →</button>
+      <span id="weekLabel" style="font-size:13px;color:var(--ink-soft)"></span>
+      <button class="btn ghost small" style="margin-left:auto" onclick="openSchedule()">⚙ График</button>
+    </div>
+    <div class="legend">
+      <span><i class="paid"></i> оплачено</span>
+      <span><i class="unpaid"></i> не оплачено</span>
+      <span><i class="free"></i> пробный</span>
+      <span><i class="off"></i> нерабочее</span>
+    </div>
+    <div class="calendar"><div class="cal-wrap"><div class="cal-grid" id="calGrid"></div></div></div>
+    <p class="cal-note" id="calNote"></p>
+    <p class="cal-note" style="color:var(--ink-soft)">На телефоне перетаскивание отключено — открывай занятие и меняй дату вручную.</p>
+  </section>
+
+  <section id="students">
+    <div class="toolbar">
+      <input type="search" id="studentsSearch" placeholder="Поиск по имени..." />
+      <button class="btn" onclick="openStudent()">+ Ученик</button>
+    </div>
+    <div id="studentsList"></div>
+  </section>
+
+  <section id="lessons">
+    <div class="toolbar">
+      <input type="search" id="lessonsSearch" placeholder="Поиск..." />
+      <button class="btn" onclick="openLesson()">+ Занятие</button>
+    </div>
+
+    <details class="sync">
+      <summary>Фильтры</summary>
+      <div class="filters" style="border:none;box-shadow:none;padding:0;margin-top:8px">
+        <div class="f"><label>Период</label>
+          <select id="fPeriod" onchange="renderLessons()">
+            <option value="all">Все</option>
+            <option value="thisMonth">Этот месяц</option>
+            <option value="prevMonth">Прошлый месяц</option>
+            <option value="week">Эта неделя</option>
+            <option value="custom">Диапазон</option>
+          </select>
+        </div>
+        <div class="f"><label>С</label><input type="date" id="fFrom" onchange="renderLessons()" /></div>
+        <div class="f"><label>По</label><input type="date" id="fTo" onchange="renderLessons()" /></div>
+        <div class="f"><label>Ученик</label>
+          <select id="fStudent" onchange="renderLessons()"><option value="">Все</option></select>
+        </div>
+        <div class="f"><label>Оплата</label>
+          <select id="fPaid" onchange="renderLessons()">
+            <option value="">Все</option>
+            <option value="paid">Оплаченные</option>
+            <option value="unpaid">Неоплаченные</option>
+          </select>
+        </div>
+        <div class="f"><label>Чек</label>
+          <select id="fReceipt" onchange="renderLessons()">
+            <option value="">Все</option>
+            <option value="yes">Есть</option>
+            <option value="no">Нет</option>
+          </select>
+        </div>
+        <div class="f"><label>ДЗ</label>
+          <select id="fHw" onchange="renderLessons()">
+            <option value="">Все</option>
+            <option value="given">ДЗ дано</option>
+            <option value="notgiven">ДЗ не дано</option>
+            <option value="received">ДЗ получено</option>
+            <option value="notreceived">ДЗ не получено</option>
+          </select>
+        </div>
+        <div class="f"><label>Тип</label>
+          <select id="fSeries" onchange="renderLessons()">
+            <option value="">Все</option>
+            <option value="series">Серии</option>
+            <option value="single">Одиночные</option>
+            <option value="trial">Пробные</option>
+          </select>
+        </div>
+        <div class="f actions">
+          <button class="btn ghost small" onclick="resetFilters()">Сбросить</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="upcoming-wrap" id="upcomingWrap"></div>
+    <h4 style="margin:14px 0 8px;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px">
+      Все занятия <span id="lessonsCount" style="color:var(--ink-soft);font-weight:400"></span>
+    </h4>
+    <div id="lessonsList"></div>
+  </section>
+
+  <section id="payments">
+    <div class="toolbar">
+      <input type="search" id="paymentsSearch" placeholder="Поиск..." />
+      <button class="btn" onclick="openPayment()">+ Оплата</button>
+    </div>
+    <div id="paymentsList"></div>
+  </section>
+
+  <section id="topics">
+    <div class="toolbar">
+      <input type="search" id="topicsSearch" placeholder="Поиск..." />
+      <button class="btn" onclick="openTopic()">+ Тема</button>
+    </div>
+    <div id="topicsList"></div>
+  </section>
+
+  <section id="summary">
+    <div class="toolbar">
+      <input type="date" id="sumFrom" />
+      <input type="date" id="sumTo" />
+      <button class="btn ghost small" onclick="setSumPeriod('month')">Месяц</button>
+      <button class="btn ghost small" onclick="setSumPeriod('all')">Всё</button>
+    </div>
+    <div class="field" style="max-width:200px">
+      <label>Ставка налога, %</label>
+      <input type="number" id="taxRate" step="0.1" min="0" max="100" oninput="saveTaxRate(this.value)" />
+    </div>
+    <div id="summaryTable"></div>
+  </section>
+
+  <section id="money">
+    <div class="subtabs">
+      <button data-sub="income" class="active" onclick="switchSub('income',this)">Доходы</button>
+      <button data-sub="receipts" onclick="switchSub('receipts',this)">Чеки</button>
+      <button data-sub="byStudent" onclick="switchSub('byStudent',this)">По ученикам</button>
+    </div>
+
+    <div id="sub-income" class="subpane active">
+      <div class="period-bar">
+        <button data-p="week" onclick="setMoneyPeriod('week',this)">Неделя</button>
+        <button data-p="month" class="active" onclick="setMoneyPeriod('month',this)">Месяц</button>
+        <button data-p="quarter" onclick="setMoneyPeriod('quarter',this)">Квартал</button>
+        <button data-p="year" onclick="setMoneyPeriod('year',this)">Год</button>
+        <button data-p="all" onclick="setMoneyPeriod('all',this)">Всё</button>
+      </div>
+      <div class="summary-cards" id="moneyCards"></div>
+    </div>
+
+    <div id="sub-receipts" class="subpane">
+      <div class="toolbar">
+        <input type="date" id="rcFrom" />
+        <input type="date" id="rcTo" />
+        <button class="btn ghost small" onclick="setRcPeriod('month')">Месяц</button>
+        <button class="btn ghost small" onclick="setRcPeriod('all')">Всё</button>
+      </div>
+      <div id="receiptsTable"></div>
+    </div>
+
+    <div id="sub-byStudent" class="subpane">
+      <div id="moneyTable"></div>
+    </div>
+  </section>
+
+  <section id="reminders">
+    <div id="remindersList"></div>
+    <h4 style="margin:20px 0 8px;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px">История</h4>
+    <div id="remindersHistory"></div>
+  </section>
+
+  <section id="settings">
+    <details class="sync" open>
+      <summary>Синхронизация (GitHub Gist)</summary>
+      <p>Данные хранятся локально в браузере и синхронизируются через твой приватный Gist. Работает с iPhone, если настроить.</p>
+      <div class="field"><label>GitHub токен</label>
+        <input type="password" id="ghToken" placeholder="ghp_..." /></div>
+      <div class="field"><label>ID Gist</label>
+        <input type="text" id="ghGist" placeholder="a1b2c3..." /></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="saveSync()">Сохранить и синхронизировать</button>
+        <button class="btn ghost" onclick="syncNow()">Синхр. сейчас</button>
+        <button class="btn danger" onclick="disableSync()">Отключить</button>
+      </div>
+      <p id="syncMsg" style="margin-top:10px"></p>
+    </details>
+
+    <details class="sync" open>
+      <summary>Налог и уведомления</summary>
+      <div class="field"><label>Ставка налога, %</label>
+        <input type="number" id="taxRateSettings" step="0.1" min="0" max="100" oninput="saveTaxRate(this.value)" /></div>
+      <label class="check-row">
+        <input type="checkbox" id="notifEnabled" onchange="saveNotifSettings()" />
+        <span style="font-size:14px">Показывать напоминания</span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" id="notifSound" onchange="saveNotifSettings()" />
+        <span style="font-size:14px">Звук (может не работать на iOS Safari)</span>
+      </label>
+    </details>
+
+    <details class="sync">
+      <summary>Экспорт / импорт / сброс</summary>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn ghost" onclick="exportData()">Скачать JSON</button>
+        <button class="btn ghost" onclick="document.getElementById('importFile').click()">Импорт JSON</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)" />
+        <button class="btn danger" onclick="resetData()">Сбросить всё</button>
+      </div>
+    </details>
+  </section>
+</main>
+
+<!-- МОБИЛЬНАЯ НИЖНЯЯ НАВИГАЦИЯ -->
+<nav class="mobile">
+  <button data-tab="calendar" class="active"><span class="ic">📅</span>Календарь</button>
+  <button data-tab="lessons"><span class="ic">📚</span>Занятия</button>
+  <button data-tab="students"><span class="ic">👥</span>Ученики</button>
+  <button data-tab="money"><span class="ic">💰</span>Деньги</button>
+  <button data-tab="reminders"><span class="ic">🔔</span>Напом.<span class="badge" id="remBadgeM" style="display:none"></span></button>
+  <button data-tab="more"><span class="ic">⋯</span>Ещё</button>
+</nav>
+
+<div class="modal-back" id="modalBack"><div class="modal" id="modalContent"></div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============================================================
+   ХРАНИЛИЩЕ: IndexedDB с автооткатом на localStorage.
+   Ошибки переполнения больше не показываются.
+   ============================================================ */
+const DB_NAME = 'tutor_db';
+const DB_STORE = 'kv';
+const STORAGE_KEY = 'tutor_data_v7';
+const SYNC_KEY = 'tutor_sync_v7';
+const NOTIF_KEY = 'tutor_notif_v7';
+
+let idb = null;      // открытая база
+let idbReady = null; // промис открытия
+
+function openIDB(){
+  if(idbReady) return idbReady;
+  idbReady = new Promise((resolve)=>{
+    if(!('indexedDB' in window)){ resolve(null); return; }
+    try{
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore(DB_STORE); };
+      req.onsuccess = ()=>{ idb = req.result; resolve(idb); };
+      req.onerror = ()=>{ console.warn('IndexedDB error', req.error); resolve(null); };
+    }catch(e){ resolve(null); }
+  });
+  return idbReady;
+}
+
+async function idbGet(key){
+  const db = await openIDB();
+  if(!db){
+    try{ const v = localStorage.getItem(key); return v?JSON.parse(v):null; }catch(e){ return null; }
+  }
+  return new Promise(res=>{
+    try{
+      const tx = db.transaction(DB_STORE,'readonly');
+      const st = tx.objectStore(DB_STORE);
+      const r = st.get(key);
+      r.onsuccess = ()=>{
+        const v = r.result;
+        if(v === undefined || v === null){
+          // миграция из localStorage
+          try{
+            const ls = localStorage.getItem(key);
+            if(ls){ const parsed = JSON.parse(ls); res(parsed); return; }
+          }catch(e){}
+        }
+        res(v);
+      };
+      r.onerror = ()=>res(null);
+    }catch(e){ res(null); }
+  });
+}
+
+async function idbSet(key, val){
+  const db = await openIDB();
+  if(!db){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+    return true;
+  }
+  return new Promise(res=>{
+    try{
+      const tx = db.transaction(DB_STORE,'readwrite');
+      const st = tx.objectStore(DB_STORE);
+      const r = st.put(val, key);
+      r.onsuccess = ()=>res(true);
+      r.onerror = ()=>{ console.warn('idb put error', r.error); res(false); };
+    }catch(e){ res(false); }
+  });
+}
+
+const DEFAULT_SCHEDULE = {
+  1:[{from:'15:00', to:'21:00'}], 2:[{from:'15:00', to:'21:00'}],
+  3:[{from:'15:00', to:'21:00'}], 4:[{from:'15:00', to:'21:00'}],
+  5:[{from:'15:00', to:'21:00'}], 6:[{from:'10:00', to:'14:00'}], 0:[]
+};
+
+let state = {
+  students: [], lessons: [], payments: [], topics: [],
+  parentReminders: [],
+  schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),
+  taxRate: 6,
+  updatedAt: 0
+};
+let sync = { token:'', gistId:'', enabled:false };
+let notifPrefs = { enabled: true, sound: false };
+let calWeekStart = startOfWeek(new Date());
+
+let saveTimer = null;
+function saveLocal(){
+  // Отложенная запись, чтобы не тормозить UI
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    await idbSet(STORAGE_KEY, state);
+  }, 200);
+}
+
+async function loadLocal(){
+  try{
+    const r = await idbGet(STORAGE_KEY);
+    if(r) state = Object.assign(state, r);
+  }catch(e){}
+  try{
+    const s = await idbGet(SYNC_KEY);
+    if(s) sync = Object.assign(sync, s);
+  }catch(e){}
+  try{
+    const n = await idbGet(NOTIF_KEY);
+    if(n) notifPrefs = Object.assign(notifPrefs, n);
+  }catch(e){}
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+/* ============ ТОСТЫ ============ */
+window.toast = function(type, title, text, timeout){
+  if(type !== 'error' && !notifPrefs.enabled) return;
+  const wrap = document.getElementById('toastWrap');
+  if(!wrap) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type||'info');
+  const icons = { error:'⚠️', success:'✅', info:'🔔' };
+  el.innerHTML = `
+    <span class="ic">${icons[type]||'ℹ️'}</span>
+    <div class="body">${title?'<b>'+escapeHtml(title)+'</b>':''}${escapeHtml(text||'')}</div>
+    <button class="close" aria-label="закрыть">×</button>
+  `;
+  wrap.appendChild(el);
+  const close = ()=>{ el.classList.add('hide'); setTimeout(()=>el.remove(), 320); };
+  el.querySelector('.close').onclick = close;
+  const ms = timeout != null ? timeout : (type==='error' ? 6000 : 4500);
+  if(ms > 0) setTimeout(close, ms);
+  if(type!=='error' && notifPrefs.sound && notifPrefs.enabled){
+    try{
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.frequency.value = 720; o.type='sine'; g.gain.value = 0.08;
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); setTimeout(()=>{ o.stop(); ctx.close(); }, 180);
+    }catch(e){}
+  }
+};
+window.saveNotifSettings = function(){
+  notifPrefs.enabled = document.getElementById('notifEnabled').checked;
+  notifPrefs.sound = document.getElementById('notifSound').checked;
+  idbSet(NOTIF_KEY, notifPrefs);
+  toast('success','Настройки сохранены','');
+};
+
+/* ============ СИНХРОНИЗАЦИЯ ============ */
+const GIST_FILE = 'tutor_data.json';
+let pushTimer = null;
+function setSyncStatus(text, cls){
+  document.getElementById('syncText').textContent = text;
+  document.getElementById('syncDot').className = 'dot' + (cls ? ' ' + cls : '');
+}
+async function ghRequest(method, url, body){
+  const res = await fetch(url, { method,
+    headers:{ 'Authorization':'token '+sync.token, 'Accept':'application/vnd.github+json',
+      'Content-Type':'application/json' },
+    body: body ? JSON.stringify(body) : undefined });
+  if(!res.ok) throw new Error('GitHub '+res.status);
+  return res.json();
+}
+async function pullFromGist(){
+  if(!sync.enabled) return;
+  try{
+    setSyncStatus('синхр...','');
+    const gist = await ghRequest('GET','https://api.github.com/gists/'+sync.gistId);
+    const file = gist.files[GIST_FILE] || Object.values(gist.files)[0];
+    if(file && file.content){
+      const remote = JSON.parse(file.content);
+      if((remote.updatedAt||0) > (state.updatedAt||0)){
+        state = Object.assign({students:[],lessons:[],payments:[],topics:[],
+          parentReminders:[],schedule:DEFAULT_SCHEDULE,taxRate:6,updatedAt:0}, remote);
+        saveLocal(); renderAll();
+      }
+    }
+    setSyncStatus('синхр. '+new Date().toLocaleTimeString().slice(0,5),'ok');
+  }catch(e){ console.error(e); setSyncStatus('ошибка','err'); }
+}
+async function pushToGist(){
+  if(!sync.enabled) return;
+  state.updatedAt = Date.now(); saveLocal();
+  try{
+    setSyncStatus('отправка...','');
+    await ghRequest('PATCH','https://api.github.com/gists/'+sync.gistId,
+      { files:{ [GIST_FILE]:{ content: JSON.stringify(state) } } });
+    setSyncStatus('синхр. '+new Date().toLocaleTimeString().slice(0,5),'ok');
+  }catch(e){ console.error(e); setSyncStatus('ошибка','err'); }
+}
+function schedulePush(){ if(!sync.enabled) return; clearTimeout(pushTimer); pushTimer = setTimeout(pushToGist,1500); }
+
+window.saveSync = function(){
+  const t = document.getElementById('ghToken').value.trim();
+  const g = document.getElementById('ghGist').value.trim();
+  if(!t || !g){ toast('error','Заполни оба поля',''); return; }
+  sync.token=t; sync.gistId=g; sync.enabled=true;
+  idbSet(SYNC_KEY, sync);
+  toast('info','Сохранено','Синхронизирую...');
+  pullFromGist().then(pushToGist);
+};
+window.syncNow = ()=>pullFromGist();
+window.disableSync = function(){
+  sync.enabled=false; idbSet(SYNC_KEY, sync);
+  setSyncStatus('локально',''); toast('info','Синхронизация отключена','');
+};
+
+/* ============ ЭКСПОРТ/ИМПОРТ ============ */
+window.exportData = function(){
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tutor_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('success','Экспортировано','');
+};
+window.importData = function(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const d = JSON.parse(r.result);
+      state = Object.assign({students:[],lessons:[],payments:[],topics:[],
+        parentReminders:[],schedule:DEFAULT_SCHEDULE,taxRate:6}, d);
+      saveLocal(); renderAll(); schedulePush();
+      toast('success','Импортировано','');
+    }catch(e){ toast('error','Ошибка импорта', e.message); }
+  };
+  r.readAsText(f); ev.target.value='';
+};
+window.resetData = function(){
+  if(!confirm('Удалить все данные?')) return;
+  state = {students:[],lessons:[],payments:[],topics:[],parentReminders:[],
+    schedule:JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),taxRate:6,updatedAt:0};
+  saveLocal(); renderAll(); schedulePush();
+  toast('info','Данные сброшены','');
+};
+
+window.saveTaxRate = function(val){
+  const v = Math.max(0, Math.min(100, Number(val)||0));
+  state.taxRate = v;
+  const s1 = document.getElementById('taxRate'); if(s1 && Number(s1.value)!=v) s1.value = v;
+  const s2 = document.getElementById('taxRateSettings'); if(s2 && Number(s2.value)!=v) s2.value = v;
+  saveLocal(); renderSummary(); renderMoney(); schedulePush();
+};
+
+/* ============ МОДАЛКА ============ */
+function openModal(h){
+  document.getElementById('modalContent').innerHTML=h;
+  document.getElementById('modalBack').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modalBack').classList.remove('open');
+  document.getElementById('modalContent').innerHTML='';
+}
+document.getElementById('modalBack').addEventListener('click', e=>{
+  if(e.target.id==='modalBack') closeModal();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+/* ============ УТИЛИТЫ ============ */
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function studentName(id){ const s=state.students.find(x=>x.id===id); return s?s.name:'— удалён —'; }
+function topicTitle(id){ const t=state.topics.find(x=>x.id===id); return t?t.title:''; }
+function fmtMoney(n){ return (Number(n)||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽'; }
+function today(){ return ymd(new Date()); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function startOfWeek(d){
+  const x = new Date(d); const day = x.getDay()||7;
+  x.setDate(x.getDate()-day+1); x.setHours(0,0,0,0); return x;
+}
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function curMonth(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1); }
+function monthLabel(m){
+  const [y,mm] = m.split('-').map(Number);
+  return new Date(y,mm-1,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+}
+function dateLabelRu(iso){
+  return new Date(iso+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short',weekday:'short'});
+}
+const DAY_NAMES = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const DAY_ORDER = [1,2,3,4,5,6,0];
+const PAY_TYPE_LABEL = { single:'Разовая', subscription:'Абонемент', per_lesson:'После занятия' };
+function dowToIdx(jsDow){ return (jsDow+6)%7; }
+function timeToMinutes(t){ if(!t) return 0; const [h,m]=t.split(':').map(Number); return h*60+(m||0); }
+
+/* ============ УЧЕНИКИ ============ */
+window.openStudent = function(id){
+  const s = id ? state.students.find(x=>x.id===id) : null;
+  openModal(`
+    <h2>${s?'Редактировать':'Новый ученик'}</h2>
+    <div class="field"><label>Имя</label><input id="st_name" value="${s?escapeHtml(s.name):''}" /></div>
+    <div class="row3">
+      <div class="field"><label>Класс</label><input id="st_grade" value="${s?escapeHtml(s.grade||''):''}" /></div>
+      <div class="field"><label>Ставка, ₽/час</label><input id="st_rate" type="number" inputmode="numeric" value="${s?(s.rate||''):''}" /></div>
+      <div class="field"><label>Телефон ученика</label><input id="st_phone" type="tel" value="${s?escapeHtml(s.phone||''):''}" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Имя родителя</label><input id="st_parent" value="${s?escapeHtml(s.parentName||''):''}" /></div>
+      <div class="field"><label>Телефон родителя</label><input id="st_parentphone" type="tel" value="${s?escapeHtml(s.parentPhone||''):''}" /></div>
+    </div>
+    <div class="field"><label>Уровень при поступлении</label><textarea id="st_level">${s?escapeHtml(s.levelStart||''):''}</textarea></div>
+    <div class="field"><label>Цель</label><textarea id="st_goal">${s?escapeHtml(s.goal||''):''}</textarea></div>
+    <div class="field"><label>Прочие заметки</label><textarea id="st_notes">${s?escapeHtml(s.notes||''):''}</textarea></div>
+    <div class="actions">
+      ${s?`<button class="btn danger" onclick="deleteStudent('${s.id}')">Удалить</button>`:''}
+      <button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="saveStudent('${s?s.id:''}')">Сохранить</button>
+    </div>
+  `);
+};
+window.saveStudent = function(id){
+  const name = document.getElementById('st_name').value.trim();
+  if(!name){ toast('error','Введите имя',''); return; }
+  const data = {
+    name,
+    grade: document.getElementById('st_grade').value.trim(),
+    rate: Number(document.getElementById('st_rate').value)||0,
+    phone: document.getElementById('st_phone').value.trim(),
+    parentName: document.getElementById('st_parent').value.trim(),
+    parentPhone: document.getElementById('st_parentphone').value.trim(),
+    levelStart: document.getElementById('st_level').value.trim(),
+    goal: document.getElementById('st_goal').value.trim(),
+    notes: document.getElementById('st_notes').value.trim()
+  };
+  if(id) Object.assign(state.students.find(x=>x.id===id), data);
+  else state.students.push(Object.assign({id:uid(),createdAt:Date.now()}, data));
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+  toast('success', id?'Обновлено':'Добавлено', name);
+};
+window.deleteStudent = function(id){
+  if(!confirm('Удалить ученика?')) return;
+  state.students = state.students.filter(x=>x.id!==id);
+  state.parentReminders = state.parentReminders.filter(r=>r.studentId!==id);
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+};
+function renderStudents(){
+  const q = document.getElementById('studentsSearch').value.toLowerCase();
+  const list = state.students.filter(s=>!q||s.name.toLowerCase().includes(q))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  const box = document.getElementById('studentsList');
+  if(!list.length){ box.innerHTML = `<div class="empty">Нет учеников.</div>`; return; }
+  box.innerHTML = list.map(s=>{
+    const lessons = state.lessons.filter(l=>l.studentId===s.id).length;
+    const paid = state.lessons.filter(l=>l.studentId===s.id && l.paid)
+      .reduce((a,l)=>a+(Number(l.price)||0),0);
+    return `
+      <div class="card">
+        <div class="grow">
+          <h3>${escapeHtml(s.name)} ${s.grade?'<span class="tag">'+escapeHtml(s.grade)+' класс</span>':''}</h3>
+          <div class="meta">
+            ${s.phone?'📞 '+escapeHtml(s.phone)+' · ':''}
+            ${s.rate||'—'} ₽/час · Занятий: ${lessons} · Оплачено: ${paid} ₽
+          </div>
+          ${s.parentName||s.parentPhone?`<div class="meta">👨‍👩‍👧 ${escapeHtml(s.parentName||'')} ${s.parentPhone?'· '+escapeHtml(s.parentPhone):''}</div>`:''}
+          ${s.levelStart?`<div class="meta">📖 ${escapeHtml(s.levelStart)}</div>`:''}
+          ${s.goal?`<div class="meta">🎯 ${escapeHtml(s.goal)}</div>`:''}
+        </div>
+        <button class="btn ghost small" onclick="openStudent('${s.id}')">Изменить</button>
+      </div>`;
+  }).join('');
+}
+
+/* ============ КАЛЬКУЛЯТОР ============ */
+let lessonCalc = { rate:0, hours:1, discountType:'rub', discountValue:0, useManual:false };
+let selectedDays = {};
+
+function calcPrice(){
+  const rate = Number(lessonCalc.rate)||0;
+  const hours = Number(lessonCalc.hours)||0;
+  const gross = rate*hours;
+  let disc = 0;
+  const dv = Number(lessonCalc.discountValue)||0;
+  if(lessonCalc.discountType==='percent'){ disc = gross * Math.min(100,Math.max(0,dv))/100; }
+  else{ disc = Math.min(gross, Math.max(0,dv)); }
+  return { gross, disc, net: Math.max(0, gross - disc) };
+}
+window.calcRecalc = function(){
+  const rateEl = document.getElementById('calc_rate'); if(!rateEl) return;
+  lessonCalc.rate = Number(rateEl.value)||0;
+  lessonCalc.hours = Number(document.getElementById('calc_hours').value)||0;
+  lessonCalc.discountValue = Number(document.getElementById('calc_disc').value)||0;
+  const {gross, disc, net} = calcPrice();
+  document.getElementById('calc_gross').textContent = fmtMoney(gross);
+  document.getElementById('calc_disc_amount').textContent = disc>0 ? ('−'+fmtMoney(disc)) : '—';
+  document.getElementById('calc_net').textContent = fmtMoney(net);
+  const priceEl = document.getElementById('ls_price');
+  if(priceEl && !lessonCalc.useManual) priceEl.value = Math.round(net*100)/100;
+};
+window.calcSwitchDiscType = function(type){
+  lessonCalc.discountType = type;
+  document.querySelectorAll('.disc-toggle button').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.disc-toggle button[data-t="'+type+'"]').classList.add('active');
+  const discEl = document.getElementById('calc_disc');
+  if(discEl) discEl.placeholder = type==='percent' ? '5' : '200';
+  calcRecalc();
+};
+window.calcManualToggle = function(checked){
+  lessonCalc.useManual = checked;
+  const p = document.getElementById('ls_price');
+  if(p) p.disabled = !checked && document.getElementById('ls_type').value!=='trial';
+  if(!checked) calcRecalc();
+};
+
+/* ============ ЗАНЯТИЯ ============ */
+window.openLesson = function(id){
+  const l = id ? state.lessons.find(x=>x.id===id) : null;
+  const sOpts = state.students.map(s=>
+    `<option value="${s.id}" ${l&&l.studentId===s.id?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+  const tOpts = state.topics.map(t=>
+    `<option value="${t.id}" ${l&&l.topicId===t.id?'selected':''}>${escapeHtml(t.title)}</option>`).join('');
+
+  const studentRate = l ? (state.students.find(x=>x.id===l.studentId)?.rate || 0) : 0;
+  const startRate = l ? (l.rate || studentRate || 0) : studentRate;
+  const startHours = l ? (l.hours || ((l.duration||60)/60)) : 1;
+  const startDiscType = l ? (l.discountType || 'rub') : 'rub';
+  const startDiscValue = l ? (l.discountValue || 0) : 0;
+  const startPrice = l ? l.price : null;
+
+  lessonCalc = { rate: startRate, hours: startHours, discountType: startDiscType,
+    discountValue: startDiscValue, useManual: false };
+
+  openModal(`
+    <h2>${l?'Редактировать занятие':'Новое занятие'}</h2>
+    <div class="field"><label>Ученик</label><select id="ls_student" onchange="onStudentChangeLesson()"><option value="">— выбери —</option>${sOpts}</select></div>
+    <div class="row2">
+      <div class="field"><label>Тип занятия</label>
+        <select id="ls_type" onchange="onLessonTypeChange()">
+          <option value="individual" ${l&&l.type==='individual'?'selected':''}>Индивидуальное</option>
+          <option value="trial" ${l&&l.type==='trial'?'selected':''}>Пробный (30 мин, 0 ₽)</option>
+        </select>
+      </div>
+      <div class="field"><label>Дата</label><input id="ls_date" type="date" value="${l?l.date:today()}" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Время</label><input id="ls_time" type="time" value="${l?(l.time||''):''}" /></div>
+      <div class="field"><label>Тема</label><select id="ls_topic"><option value="">— без темы —</option>${tOpts}</select></div>
+    </div>
+
+    <div class="calc-box">
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:8px;font-weight:600">Расчёт стоимости</div>
+      <div class="calc-grid">
+        <div class="field"><label>Ставка, ₽/час</label>
+          <input type="number" id="calc_rate" inputmode="numeric" value="${startRate}" oninput="calcRecalc()" /></div>
+        <div class="field"><label>Часов</label>
+          <input type="number" id="calc_hours" step="0.25" min="0" inputmode="decimal" value="${startHours}" oninput="calcRecalc()" /></div>
+        <div class="field"><label>Скидка
+            <span class="disc-toggle" style="margin-left:6px">
+              <button type="button" data-t="rub" class="${startDiscType==='rub'?'active':''}" onclick="calcSwitchDiscType('rub')">₽</button>
+              <button type="button" data-t="percent" class="${startDiscType==='percent'?'active':''}" onclick="calcSwitchDiscType('percent')">%</button>
+            </span>
+          </label>
+          <input type="number" id="calc_disc" inputmode="numeric" value="${startDiscValue}" oninput="calcRecalc()" placeholder="${startDiscType==='percent'?'5':'200'}" /></div>
+      </div>
+      <div class="calc-result">
+        <span class="lbl">К оплате:</span>
+        <span class="val"><span class="strike" id="calc_gross"></span><span id="calc_net"></span></span>
+      </div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:6px">
+        Скидка: <span id="calc_disc_amount">—</span>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>Итоговая стоимость</label>
+        <input type="number" id="ls_price" inputmode="numeric" value="${startPrice!=null?startPrice:''}" disabled />
+      </div>
+      <label class="check-row" style="padding:0">
+        <input type="checkbox" id="calc_manual" onchange="calcManualToggle(this.checked)" />
+        <span style="font-size:14px">Указать вручную</span>
+      </label>
+    </div>
+
+    <div class="field"><label>Заметки</label><textarea id="ls_notes">${l?escapeHtml(l.notes||''):''}</textarea></div>
+    <div class="row2">
+      <label class="check-row" style="padding:0">
+        <input type="checkbox" id="ls_paid" ${l&&l.paid?'checked':''} />
+        <span style="font-size:14px">Оплачено</span>
+      </label>
+      <label class="check-row" style="padding:0">
+        <input type="checkbox" id="ls_receipt" ${l&&l.receiptIssued?'checked':''} />
+        <span style="font-size:14px">Чек выставлен</span>
+      </label>
+    </div>
+    <div class="row2">
+      <label class="check-row" style="padding:0">
+        <input type="checkbox" id="ls_hw_given" ${l&&l.hwGiven?'checked':''} />
+        <span style="font-size:14px">✏️ ДЗ дано</span>
+      </label>
+      <label class="check-row" style="padding:0">
+        <input type="checkbox" id="ls_hw_received" ${l&&l.hwReceived?'checked':''} />
+        <span style="font-size:14px">📩 ДЗ получено</span>
+      </label>
+    </div>
+
+    ${l && l.seriesId ? `
+      <div style="margin-top:12px;padding:10px;background:#e6dff0;border-radius:10px">
+        <div style="font-size:13px;color:#5a4b74;margin-bottom:6px">Часть серии</div>
+        <button class="btn ghost" onclick="openSeriesEditor('${l.seriesId}')">✏️ Редактировать серию</button>
+      </div>
+    ` : ''}
+
+    ${!l?`
+      <div class="check-row" style="border-top:1px solid var(--line);padding-top:12px;margin-top:8px">
+        <input type="checkbox" id="ls_repeat" onchange="onRepeatToggle()" />
+        <label for="ls_repeat" style="margin:0;font-size:14px">Повторять по дням недели</label>
+      </div>
+      <div id="repeatBox" style="display:none">
+        <p style="font-size:13px;color:var(--ink-soft);margin:4px 0 8px">Выбери дни недели и время для каждого.</p>
+        <div class="day-chips" id="dayChips"></div>
+        <div class="day-times" id="dayTimes"></div>
+        <div class="row2" style="margin-top:8px">
+          <div class="field"><label>Недель вперёд</label>
+            <input id="ls_repeat_weeks" type="number" inputmode="numeric" value="8" min="1" max="52" /></div>
+          <div class="field"><label>Или до даты</label>
+            <input id="ls_repeat_until" type="date" /></div>
+        </div>
+        <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0">
+          Отметки применятся только к первому занятию серии.
+        </p>
+      </div>
+    `:''}
+
+    <div class="actions">
+      ${l?`<button class="btn danger" onclick="deleteLesson('${l.id}')">Удалить</button>`:''}
+      <button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="saveLesson('${l?l.id:''}')">Сохранить</button>
+    </div>
+  `);
+  calcRecalc();
+  onLessonTypeChange();
+  if(!l) initRepeatUI();
+};
+window.onStudentChangeLesson = function(){
+  const sid = document.getElementById('ls_student').value;
+  const s = state.students.find(x=>x.id===sid);
+  if(s && s.rate){
+    const rateEl = document.getElementById('calc_rate');
+    if(rateEl && !rateEl.dataset.userEdited){ rateEl.value = s.rate; lessonCalc.rate = s.rate; calcRecalc(); }
+  }
+};
+window.onLessonTypeChange = function(){
+  const type = document.getElementById('ls_type').value;
+  const calcBox = document.querySelector('.calc-box');
+  const priceEl = document.getElementById('ls_price');
+  if(type==='trial'){
+    if(calcBox) calcBox.style.display = 'none';
+    priceEl.value = 0; priceEl.disabled = true;
+  }else{
+    if(calcBox) calcBox.style.display = '';
+    const manual = document.getElementById('calc_manual').checked;
+    priceEl.disabled = !manual;
+    calcRecalc();
+  }
+};
+window.onRepeatToggle = function(){
+  const on = document.getElementById('ls_repeat').checked;
+  document.getElementById('repeatBox').style.display = on ? '' : 'none';
+  if(on) renderDayChips();
+};
+function initRepeatUI(){ selectedDays = {}; renderDayChips(); renderDayTimes(); }
+function renderDayChips(){
+  const wrap = document.getElementById('dayChips'); if(!wrap) return;
+  wrap.innerHTML = DAY_ORDER.map((jsDow, idx)=>{
+    const on = selectedDays[idx] !== undefined;
+    return `<div class="chip ${on?'on':''}" onclick="toggleDay(${idx})">${DAY_SHORT[idx]}</div>`;
+  }).join('');
+}
+window.toggleDay = function(idx){
+  if(selectedDays[idx] !== undefined) delete selectedDays[idx];
+  else {
+    const base = document.getElementById('ls_time').value || '15:00';
+    selectedDays[idx] = base;
+  }
+  renderDayChips(); renderDayTimes();
+};
+function renderDayTimes(){
+  const box = document.getElementById('dayTimes'); if(!box) return;
+  const keys = Object.keys(selectedDays).map(Number).sort((a,b)=>a-b);
+  if(!keys.length){ box.innerHTML = '<div style="font-size:13px;color:var(--ink-soft)">Дни не выбраны</div>'; return; }
+  box.innerHTML = keys.map(idx=>`
+    <div class="day-time-row">
+      <div class="dname">${DAY_NAMES[idx]}</div>
+      <input type="time" value="${selectedDays[idx]}" onchange="dayTimeChange(${idx},this.value)" />
+    </div>
+  `).join('');
+}
+window.dayTimeChange = function(idx,val){ selectedDays[idx] = val; };
+
+window.saveLesson = function(id){
+  const studentId = document.getElementById('ls_student').value;
+  if(!studentId){ toast('error','Выбери ученика',''); return; }
+  const st = state.students.find(x=>x.id===studentId);
+  const type = document.getElementById('ls_type').value;
+  const isTrial = type==='trial';
+  let price, hours, rate, discountType, discountValue;
+  if(isTrial){ price=0; hours=0.5; rate=0; discountType='rub'; discountValue=0; }
+  else {
+    const manual = document.getElementById('calc_manual').checked;
+    price = manual ? (Number(document.getElementById('ls_price').value)||0)
+                   : Math.round(calcPrice().net * 100)/100;
+    rate = Number(document.getElementById('calc_rate').value)||0;
+    hours = Number(document.getElementById('calc_hours').value)||0;
+    discountType = lessonCalc.discountType;
+    discountValue = Number(document.getElementById('calc_disc').value)||0;
+  }
+  const duration = isTrial ? 30 : Math.round((hours||1)*60);
+  const firstFlags = {
+    paid: isTrial ? false : document.getElementById('ls_paid').checked,
+    receiptIssued: document.getElementById('ls_receipt').checked,
+    hwGiven: document.getElementById('ls_hw_given').checked,
+    hwReceived: document.getElementById('ls_hw_received').checked
+  };
+  const base = {
+    studentId, type,
+    date: document.getElementById('ls_date').value,
+    time: document.getElementById('ls_time').value,
+    duration,
+    topicId: document.getElementById('ls_topic').value,
+    price, rate, hours, discountType, discountValue,
+    notes: document.getElementById('ls_notes').value.trim()
+  };
+
+  if(id){
+    Object.assign(state.lessons.find(x=>x.id===id), base, firstFlags);
+    syncPaymentFromLesson(state.lessons.find(x=>x.id===id));
+    toast('success','Обновлено','');
+  }else{
+    const repeatChk = document.getElementById('ls_repeat');
+    if(repeatChk && repeatChk.checked){
+      const weeks = Math.max(1, Number(document.getElementById('ls_repeat_weeks').value)||1);
+      const untilVal = document.getElementById('ls_repeat_until').value;
+      const dayKeys = Object.keys(selectedDays).map(Number);
+      if(!dayKeys.length){ toast('error','Выбери день недели',''); return; }
+      const baseDate = new Date(base.date+'T00:00:00');
+      const seriesId = uid();
+      let created = 0;
+      for(let w=0; w<weeks; w++){
+        dayKeys.sort((a,b)=>a-b).forEach(idx=>{
+          const baseIdx = dowToIdx(baseDate.getDay());
+          let offset = idx - baseIdx;
+          if(offset < 0) offset += 7;
+          const d = addDays(baseDate, w*7 + offset);
+          const dstr = ymd(d);
+          if(untilVal && dstr > untilVal) return;
+          if(dstr < base.date) return;
+          const isFirst = (created === 0);
+          const lesson = Object.assign({id:uid(), createdAt:Date.now()},
+            base, {date:dstr, time: selectedDays[idx], seriesId},
+            isFirst ? firstFlags : {paid:false, receiptIssued:false, hwGiven:false, hwReceived:false});
+          state.lessons.push(lesson);
+          if(isFirst) syncPaymentFromLesson(lesson);
+          created++;
+        });
+      }
+      if(!created){ toast('error','Не удалось создать',''); return; }
+      toast('success','Серия создана', created+' занятий');
+    }else{
+      const lesson = Object.assign({id:uid(), createdAt:Date.now()}, base, firstFlags);
+      state.lessons.push(lesson);
+      syncPaymentFromLesson(lesson);
+      toast('success','Добавлено', studentName(studentId)+' · '+base.date);
+    }
+  }
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+};
+
+window.deleteLesson = function(id){
+  const l = state.lessons.find(x=>x.id===id);
+  if(!l) return;
+  const isSeries = l.seriesId && state.lessons.filter(x=>x.seriesId===l.seriesId).length>1;
+  let delSeries = false;
+  if(isSeries){
+    delSeries = confirm('Часть серии. Удалить всю серию?');
+  }else{
+    if(!confirm('Удалить?')) return;
+  }
+  const ids = delSeries ? state.lessons.filter(x=>x.seriesId===l.seriesId).map(x=>x.id) : [id];
+  state.lessons = state.lessons.filter(x=>!ids.includes(x.id));
+  state.payments = state.payments.filter(p=>!(p.autoGenerated && ids.includes(p.sourceLessonId)));
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+  toast('info', delSeries?'Серия удалена':'Удалено','');
+};
+
+/* ============ РЕДАКТОР СЕРИИ ============ */
+window.openSeriesEditor = function(seriesId){
+  const lessons = state.lessons.filter(l=>l.seriesId===seriesId)
+    .sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  if(!lessons.length){ toast('error','Серия не найдена',''); return; }
+  const first = lessons[0];
+  const student = state.students.find(s=>s.id===first.studentId);
+  const dayTimes = {};
+  lessons.forEach(l=>{
+    const d = new Date(l.date+'T00:00:00');
+    const idx = dowToIdx(d.getDay());
+    if(dayTimes[idx] === undefined) dayTimes[idx] = l.time;
+  });
+  selectedDays = Object.assign({}, dayTimes);
+  const lastDate = lessons[lessons.length-1].date;
+
+  openModal(`
+    <h2>Редактировать серию</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px">
+      ${escapeHtml(student?student.name:'—')} · ${lessons.length} занятий
+    </p>
+    <div class="field"><label>Дни недели и время</label></div>
+    <div class="day-chips" id="dayChips"></div>
+    <div class="day-times" id="dayTimes"></div>
+    <div class="row2">
+      <div class="field"><label>Пересоздать с</label>
+        <input type="date" id="ser_from" value="${first.date}" /></div>
+      <div class="field"><label>по</label>
+        <input type="date" id="ser_until" value="${lastDate}" /></div>
+    </div>
+    <div class="row3">
+      <div class="field"><label>₽/час</label>
+        <input type="number" id="ser_rate" value="${first.rate||student?.rate||0}" /></div>
+      <div class="field"><label>Часов</label>
+        <input type="number" id="ser_hours" step="0.25" value="${first.hours||1}" /></div>
+      <div class="field"><label>Цена</label>
+        <input type="number" id="ser_price" value="${first.price||0}" /></div>
+    </div>
+    <label class="check-row">
+      <input type="checkbox" id="ser_keep_flags" checked />
+      <span style="font-size:13px">Сохранить галочки у существующих</span>
+    </label>
+    <div style="margin-top:12px;padding:10px;background:#fae6e2;border-radius:10px;border:1px solid #ecc7c0">
+      <div style="font-size:13px;color:#6f3229;margin-bottom:8px">
+        «Пересоздать» удалит текущие и создаст новые. Нельзя отменить.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn danger" onclick="rebuildSeries('${seriesId}')">Пересоздать</button>
+        <button class="btn ghost" onclick="updateSeriesTimes('${seriesId}')">Только время и цена</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal()">Закрыть</button>
+    </div>
+  `);
+  renderDayChips(); renderDayTimes();
+};
+window.updateSeriesTimes = function(seriesId){
+  const until = document.getElementById('ser_until').value;
+  const from = document.getElementById('ser_from').value;
+  const rate = Number(document.getElementById('ser_rate').value)||0;
+  const hours = Number(document.getElementById('ser_hours').value)||1;
+  const price = Number(document.getElementById('ser_price').value)||0;
+  const dayKeys = Object.keys(selectedDays).map(Number);
+  if(!dayKeys.length){ toast('error','Дни не выбраны',''); return; }
+  let updated = 0;
+  state.lessons.filter(l=>l.seriesId===seriesId).forEach(l=>{
+    if(from && l.date < from) return;
+    if(until && l.date > until) return;
+    const d = new Date(l.date+'T00:00:00');
+    const idx = dowToIdx(d.getDay());
+    if(selectedDays[idx] !== undefined) l.time = selectedDays[idx];
+    l.rate = rate; l.hours = hours; l.price = price;
+    l.duration = Math.round(hours*60);
+    if(l.paid && l.price>0) syncPaymentFromLesson(l);
+    updated++;
+  });
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+  toast('success','Серия обновлена', 'Занятий: '+updated);
+};
+window.rebuildSeries = function(seriesId){
+  if(!confirm('Пересоздать серию?')) return;
+  const until = document.getElementById('ser_until').value;
+  const from = document.getElementById('ser_from').value;
+  const rate = Number(document.getElementById('ser_rate').value)||0;
+  const hours = Number(document.getElementById('ser_hours').value)||1;
+  const price = Number(document.getElementById('ser_price').value)||0;
+  const keepFlags = document.getElementById('ser_keep_flags').checked;
+  const dayKeys = Object.keys(selectedDays).map(Number);
+  if(!dayKeys.length || !from || !until){ toast('error','Заполни поля',''); return; }
+  const existing = state.lessons.filter(l=>l.seriesId===seriesId);
+  if(!existing.length){ toast('error','Серия пуста',''); return; }
+  const template = existing[0];
+  const flagsByDate = {};
+  existing.forEach(l=>{ flagsByDate[l.date] = {
+    paid: l.paid, receiptIssued: l.receiptIssued, hwGiven: l.hwGiven, hwReceived: l.hwReceived
+  };});
+  state.lessons = state.lessons.filter(l=>l.seriesId!==seriesId);
+  state.payments = state.payments.filter(p=>!(p.autoGenerated && existing.some(e=>e.id===p.sourceLessonId)));
+  const startDate = new Date(from+'T00:00:00');
+  const endDate = new Date(until+'T00:00:00');
+  let created = 0;
+  const cur = new Date(startDate);
+  while(cur <= endDate){
+    const idx = dowToIdx(cur.getDay());
+    if(dayKeys.includes(idx)){
+      const dstr = ymd(cur);
+      const flags = keepFlags && flagsByDate[dstr] ? flagsByDate[dstr]
+        : {paid:false, receiptIssued:false, hwGiven:false, hwReceived:false};
+      const lesson = {
+        id: uid(), createdAt: Date.now(), seriesId,
+        studentId: template.studentId, type: template.type,
+        date: dstr, time: selectedDays[idx],
+        duration: Math.round(hours*60),
+        topicId: template.topicId,
+        price, rate, hours, discountType: template.discountType||'rub',
+        discountValue: template.discountValue||0,
+        notes: template.notes||''
+      };
+      Object.assign(lesson, flags);
+      state.lessons.push(lesson);
+      if(lesson.paid && lesson.price>0) syncPaymentFromLesson(lesson);
+      created++;
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+  toast('success','Пересоздано', 'Занятий: '+created);
+};
+
+/* ============ СИНХР. ОПЛАТА↔ЗАНЯТИЕ ============ */
+function syncPaymentFromLesson(lesson){
+  if(!lesson) return;
+  const shouldCreate = lesson.paid && lesson.price > 0;
+  const existing = state.payments.find(p=>p.sourceLessonId === lesson.id);
+  if(shouldCreate){
+    if(existing){
+      existing.amount = lesson.price;
+      existing.date = lesson.date;
+      existing.studentId = lesson.studentId;
+      if(existing.autoGenerated !== false){
+        existing.autoGenerated = true;
+        existing.type = 'per_lesson';
+        existing.receiptIssued = lesson.receiptIssued;
+        existing.paid = true;
+        existing.period = 'Занятие от '+lesson.date+(lesson.time?' '+lesson.time:'');
+      }
+    }else{
+      state.payments.push({
+        id: uid(), autoGenerated: true, sourceLessonId: lesson.id,
+        studentId: lesson.studentId, type: 'per_lesson',
+        date: lesson.date, amount: lesson.price,
+        period: 'Занятие от '+lesson.date+(lesson.time?' '+lesson.time:''),
+        paid: true, receiptIssued: lesson.receiptIssued,
+        notes: '', createdAt: Date.now()
+      });
+    }
+  }else{
+    if(existing && existing.autoGenerated){
+      state.payments = state.payments.filter(p=>p.id !== existing.id);
+    }
+  }
+}
+window.toggleLessonPaid = function(id, checked){
+  const l = state.lessons.find(x=>x.id===id); if(!l) return;
+  l.paid = checked;
+  syncPaymentFromLesson(l);
+  saveLocal(); renderAll(); schedulePush();
+};
+window.toggleReceipt = function(id, checked){
+  const l = state.lessons.find(x=>x.id===id); if(!l) return;
+  l.receiptIssued = checked;
+  const p = state.payments.find(x=>x.sourceLessonId===id);
+  if(p && p.autoGenerated) p.receiptIssued = checked;
+  saveLocal(); renderAll(); schedulePush();
+};
+window.toggleHwGiven = function(id, checked){
+  const l = state.lessons.find(x=>x.id===id); if(!l) return;
+  l.hwGiven = checked; saveLocal(); renderAll(); schedulePush();
+};
+window.toggleHwReceived = function(id, checked){
+  const l = state.lessons.find(x=>x.id===id); if(!l) return;
+  l.hwReceived = checked; saveLocal(); renderAll(); schedulePush();
+};
+
+/* ============ БЛИЖАЙШИЕ ============ */
+function renderUpcoming(){
+  const box = document.getElementById('upcomingWrap'); if(!box) return;
+  const now = new Date();
+  const nowDate = ymd(now);
+  const in2days = ymd(addDays(now, 2));
+  const overdue = [], todayL = [], soon = [], later = [];
+  state.lessons.forEach(l=>{
+    if(l.date < nowDate){
+      if((!l.paid && l.type!=='trial') || !l.receiptIssued) overdue.push(l);
+      return;
+    }
+    if(l.date === nowDate) todayL.push(l);
+    else if(l.date <= in2days) soon.push(l);
+    else if(l.date <= ymd(addDays(now, 7))) later.push(l);
+  });
+  const sortFn = (a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''));
+  overdue.sort(sortFn).reverse(); todayL.sort(sortFn); soon.sort(sortFn); later.sort(sortFn);
+  const renderItem = (l, cls='')=>{
+    const isTrial = l.type==='trial';
+    const flags = [];
+    if(l.hwGiven) flags.push('✏️'); if(l.hwReceived) flags.push('📩');
+    return `
+      <div class="upcoming-lesson ${cls}">
+        <div class="time">${dateLabelRu(l.date)}${l.time?' '+l.time:''}</div>
+        <div class="grow">
+          <b>${escapeHtml(studentName(l.studentId))}</b>
+          ${isTrial?'<span class="tag free">Пробный</span>':fmtMoney(l.price)}
+          ${isTrial?'':(l.paid?'<span class="tag paid">опл</span>':'<span class="tag unpaid">не опл</span>')}
+          ${l.receiptIssued?'<span class="tag paid">чек</span>':'<span class="tag warn">нет чека</span>'}
+          ${flags.length?' <span class="tag">'+flags.join(' ')+'</span>':''}
+        </div>
+        <button class="btn ghost small" onclick="openLesson('${l.id}')">Открыть</button>
+      </div>`;
+  };
+  let html = '';
+  if(overdue.length){
+    html += `<div class="upcoming-group overdue"><h4>⚠ Незакрытые (${overdue.length})</h4>`;
+    html += overdue.slice(0,10).map(l=>renderItem(l,'overdue')).join('');
+    html += '</div>';
+  }
+  if(todayL.length){
+    html += `<div class="upcoming-group"><h4>Сегодня (${todayL.length})</h4>`;
+    html += todayL.map(l=>renderItem(l,'today')).join('');
+    html += '</div>';
+  }
+  if(soon.length){
+    html += `<div class="upcoming-group"><h4>Ближайшие 2 дня (${soon.length})</h4>`;
+    html += soon.map(l=>renderItem(l)).join('');
+    html += '</div>';
+  }
+  if(later.length){
+    html += `<div class="upcoming-group"><h4>До конца недели (${later.length})</h4>`;
+    html += later.map(l=>renderItem(l)).join('');
+    html += '</div>';
+  }
+  if(!html) html = '<div class="empty" style="padding:20px">На ближайшие дни занятий нет.</div>';
+  box.innerHTML = html;
+}
+
+/* ============ ФИЛЬТРЫ ============ */
+function fillStudentFilter(){
+  const sel = document.getElementById('fStudent'); if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Все</option>' +
+    state.students.slice().sort((a,b)=>a.name.localeCompare(b.name))
+      .map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+  if(cur) sel.value = cur;
+}
+window.resetFilters = function(){
+  document.getElementById('fPeriod').value = 'all';
+  document.getElementById('fFrom').value = '';
+  document.getElementById('fTo').value = '';
+  document.getElementById('fStudent').value = '';
+  document.getElementById('fPaid').value = '';
+  document.getElementById('fReceipt').value = '';
+  document.getElementById('fHw').value = '';
+  document.getElementById('fSeries').value = '';
+  renderLessons();
+};
+function filterLessons(list){
+  const q = document.getElementById('lessonsSearch').value.toLowerCase();
+  const period = document.getElementById('fPeriod').value;
+  const fFromEl = document.getElementById('fFrom');
+  const fToEl = document.getElementById('fTo');
+  const studentF = document.getElementById('fStudent').value;
+  const paidF = document.getElementById('fPaid').value;
+  const recF = document.getElementById('fReceipt').value;
+  const hwF = document.getElementById('fHw').value;
+  const serF = document.getElementById('fSeries').value;
+  let from = fFromEl.value, to = fToEl.value;
+  const now = new Date();
+  if(period === 'thisMonth'){
+    from = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
+    to = ymd(new Date(now.getFullYear(), now.getMonth()+1, 0));
+  }else if(period === 'prevMonth'){
+    from = ymd(new Date(now.getFullYear(), now.getMonth()-1, 1));
+    to = ymd(new Date(now.getFullYear(), now.getMonth(), 0));
+  }else if(period === 'week'){
+    const s = startOfWeek(now);
+    from = ymd(s); to = ymd(addDays(s,6));
+  }else if(period === 'all'){
+    from = ''; to = '';
+  }
+  return list.filter(l=>{
+    if(q){
+      const txt = (studentName(l.studentId)+' '+topicTitle(l.topicId)).toLowerCase();
+      if(!txt.includes(q)) return false;
+    }
+    if(from && l.date < from) return false;
+    if(to && l.date > to) return false;
+    if(studentF && l.studentId !== studentF) return false;
+    if(paidF === 'paid' && !l.paid) return false;
+    if(paidF === 'unpaid' && l.paid) return false;
+    if(recF === 'yes' && !l.receiptIssued) return false;
+    if(recF === 'no' && l.receiptIssued) return false;
+    if(hwF === 'given' && !l.hwGiven) return false;
+    if(hwF === 'notgiven' && l.hwGiven) return false;
+    if(hwF === 'received' && !l.hwReceived) return false;
+    if(hwF === 'notreceived' && l.hwReceived) return false;
+    if(serF === 'series' && !l.seriesId) return false;
+    if(serF === 'single' && l.seriesId) return false;
+    if(serF === 'trial' && l.type !== 'trial') return false;
+    return true;
+  });
+}
+
+function renderLessons(){
+  renderUpcoming();
+  fillStudentFilter();
+  const all = state.lessons.slice().sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const list = filterLessons(all);
+  const countEl = document.getElementById('lessonsCount');
+  if(countEl) countEl.textContent = '— '+list.length;
+  const box = document.getElementById('lessonsList');
+  if(!list.length){ box.innerHTML = `<div class="empty">Ничего не найдено.</div>`; return; }
+  box.innerHTML = list.map(l=>{
+    const isTrial = l.type==='trial';
+    const isToday = l.date === today();
+    const flags = [];
+    if(l.hwGiven) flags.push('✏️'); if(l.hwReceived) flags.push('📩');
+    return `
+    <div class="card">
+      <div class="grow">
+        <h3>${escapeHtml(studentName(l.studentId))} — ${isTrial?'<span class="tag free">Пробный</span>':fmtMoney(l.price)}</h3>
+        <div class="meta">
+          📅 ${l.date}${isToday?' <span class="tag today">сегодня</span>':''}${l.time?' в '+l.time:''} · ${l.duration} мин
+          ${l.topicId?' · 🏷 '+escapeHtml(topicTitle(l.topicId)):''}
+          ${l.seriesId?' · <span class="tag series">серия</span>':''}
+        </div>
+        ${l.notes?`<div class="meta">${escapeHtml(l.notes)}</div>`:''}
+        <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap">
+          ${!isTrial?`
+          <label class="check-row" style="padding:0">
+            <input type="checkbox" ${l.paid?'checked':''}
+              onchange="toggleLessonPaid('${l.id}',this.checked)" />
+            <span style="font-size:13px">Оплачено</span>
+          </label>`:''}
+          <label class="check-row" style="padding:0">
+            <input type="checkbox" ${l.receiptIssued?'checked':''}
+              onchange="toggleReceipt('${l.id}',this.checked)" />
+            <span style="font-size:13px">Чек</span>
+          </label>
+          <label class="check-row" style="padding:0">
+            <input type="checkbox" ${l.hwGiven?'checked':''}
+              onchange="toggleHwGiven('${l.id}',this.checked)" />
+            <span style="font-size:13px">✏️ ДЗ</span>
+          </label>
+          <label class="check-row" style="padding:0">
+            <input type="checkbox" ${l.hwReceived?'checked':''}
+              onchange="toggleHwReceived('${l.id}',this.checked)" />
+            <span style="font-size:13px">📩 ДЗ</span>
+          </label>
+        </div>
+      </div>
+      <button class="btn ghost small" onclick="openLesson('${l.id}')">Изменить</button>
+    </div>`;
+  }).join('');
+}
+
+/* ============ КАЛЕНДАРЬ ============ */
+window.weekShift = function(delta){
+  if(delta===0) calWeekStart = startOfWeek(new Date());
+  else calWeekStart = addDays(calWeekStart, delta*7);
+  renderCalendar();
+};
+function calcHourRange(weekStart){
+  const weekEndStr = ymd(addDays(weekStart,6));
+  const weekStartStr = ymd(weekStart);
+  let min = null, max = null;
+  Object.values(state.schedule||{}).forEach(slots=>{
+    (slots||[]).forEach(s=>{
+      const h1 = parseInt(s.from.split(':')[0],10);
+      let h2 = parseInt(s.to.split(':')[0],10);
+      if(!s.to.endsWith(':00')) h2 += 1;
+      if(isNaN(h1)||isNaN(h2)) return;
+      if(min===null || h1<min) min = h1;
+      if(max===null || h2>max) max = h2;
+    });
+  });
+  state.lessons.forEach(l=>{
+    if(l.date < weekStartStr || l.date > weekEndStr) return;
+    if(!l.time) return;
+    const h = parseInt(l.time.split(':')[0],10);
+    if(isNaN(h)) return;
+    if(min===null || h<min) min = h;
+    const endH = h + Math.max(1, Math.ceil((l.duration||60)/60));
+    if(max===null || endH>max) max = endH;
+  });
+  if(min===null) min = 15;
+  if(max===null) max = 21;
+  if(max <= min) max = min+1;
+  min = Math.max(0, min-1);
+  max = Math.min(24, max+1);
+  return { min, max };
+}
+function renderCalendar(){
+  const grid = document.getElementById('calGrid'); if(!grid) return;
+  const start = calWeekStart;
+  const end = addDays(start, 6);
+  const range = calcHourRange(start);
+  const minH = range.min, maxH = range.max;
+  const label = start.toLocaleDateString('ru-RU',{day:'2-digit',month:'short'}) + ' — '
+    + end.toLocaleDateString('ru-RU',{day:'2-digit',month:'short'});
+  document.getElementById('weekLabel').textContent = label;
+  const noteEl = document.getElementById('calNote');
+  if(noteEl) noteEl.textContent = 'Часы '+pad(minH)+':00—'+pad(maxH)+':00';
+
+  let html = '';
+  html += '<div class="cal-head">Час</div>';
+  for(let i=0;i<7;i++){
+    const d = addDays(start,i);
+    const dow = (d.getDay()+6)%7;
+    const isToday = ymd(d)===today();
+    html += `<div class="cal-head" ${isToday?'style="background:#f0dfbe"':''}>${DAY_SHORT[dow]}<br><small>${d.getDate()}.${pad(d.getMonth()+1)}</small></div>`;
+  }
+  for(let h=minH; h<maxH; h++){
+    html += `<div class="cal-time">${pad(h)}:00</div>`;
+    for(let i=0;i<7;i++){
+      const d = addDays(start,i);
+      const dateStr = ymd(d);
+      const realDow = d.getDay();
+      const isWorking = isHourInSchedule(realDow, h);
+      const cellCls = 'cal-cell'+(isWorking?'':' off');
+      const lessons = state.lessons.filter(l=>{
+        if(l.date!==dateStr) return false;
+        if(!l.time) return false;
+        const lh = parseInt(l.time.split(':')[0],10);
+        return lh===h;
+      });
+      let slots = '';
+      lessons.forEach(l=>{
+        const isTrial = l.type==='trial';
+        const cls = isTrial ? 'free' : (l.paid?'':'unpaid');
+        const t = l.time.slice(0,5);
+        const minutes = l.duration||60;
+        const flags = (l.hwGiven?'✏️':'') + (l.hwReceived?'📩':'');
+        slots += `<div class="cal-slot ${cls}"
+            onclick="openLesson('${l.id}')"
+            title="${escapeHtml(studentName(l.studentId))}">
+          <b>${t} · ${escapeHtml(studentName(l.studentId))}</b>
+          <small>${isTrial?'проб':(minutes+'м')}</small>
+          ${flags?`<div class="flags">${flags}</div>`:''}
+        </div>`;
+      });
+      html += `<div class="${cellCls}">${slots}</div>`;
+    }
+  }
+  grid.innerHTML = html;
+}
+function isHourInSchedule(realDow, hour){
+  const slots = (state.schedule && state.schedule[realDow]) || [];
+  if(!slots.length) return false;
+  return slots.some(s=>{
+    const h1 = parseInt(s.from.split(':')[0],10);
+    let h2 = parseInt(s.to.split(':')[0],10);
+    if(!s.to.endsWith(':00')) h2 += 1;
+    return hour >= h1 && hour < h2;
+  });
+}
+
+/* ============ РАБОЧИЙ ГРАФИК ============ */
+window.openSchedule = function(){
+  const daysHtml = DAY_ORDER.map((realDow, idx)=>{
+    const name = DAY_NAMES[idx];
+    const slots = (state.schedule[realDow]||[]).map((s,i)=>
+      `<div class="sch-slot">
+        <input type="time" value="${s.from}" onchange="schChange(${realDow},${i},'from',this.value)" />
+        <input type="time" value="${s.to}" onchange="schChange(${realDow},${i},'to',this.value)" />
+        <button class="rm" onclick="schRemove(${realDow},${i})">✕</button>
+      </div>`).join('');
+    return `
+      <div class="sch-day">
+        <h4>${name}</h4>
+        <div>${slots||'<div style="font-size:12px;color:var(--ink-soft)">выходной</div>'}</div>
+        <button class="btn ghost small" style="margin-top:6px" onclick="schAdd(${realDow})">+ интервал</button>
+      </div>`;
+  }).join('');
+  openModal(`
+    <h2>Рабочий график</h2>
+    <p style="font-size:13px;color:var(--ink-soft)">Календарь подстроится под этот диапазон.</p>
+    <div class="schedule-grid">${daysHtml}</div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal()">Закрыть</button>
+    </div>
+  `);
+};
+window.schAdd = function(day){
+  if(!state.schedule[day]) state.schedule[day]=[];
+  state.schedule[day].push({from:'15:00', to:'21:00'});
+  saveLocal(); schedulePush(); openSchedule(); renderCalendar();
+};
+window.schRemove = function(day, idx){
+  state.schedule[day].splice(idx,1);
+  saveLocal(); schedulePush(); openSchedule(); renderCalendar();
+};
+window.schChange = function(day, idx, key, val){
+  state.schedule[day][idx][key] = val;
+  saveLocal(); schedulePush(); renderCalendar();
+};
+
+/* ============ ОПЛАТЫ ============ */
+window.openPayment = function(id){
+  const p = id ? state.payments.find(x=>x.id===id) : null;
+  const sOpts = state.students.map(s=>
+    `<option value="${s.id}" ${p&&p.studentId===s.id?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+  openModal(`
+    <h2>${p?'Редактировать':'Новая оплата'}</h2>
+    <div class="field"><label>Ученик</label><select id="pm_student"><option value="">—</option>${sOpts}</select></div>
+    <div class="row2">
+      <div class="field"><label>Тип</label>
+        <select id="pm_type">
+          <option value="single" ${p&&p.type==='single'?'selected':''}>Разовая</option>
+          <option value="subscription" ${p&&p.type==='subscription'?'selected':''}>Абонемент</option>
+          <option value="per_lesson" ${p&&p.type==='per_lesson'?'selected':''}>После занятия</option>
+        </select>
+      </div>
+      <div class="field"><label>Дата</label><input id="pm_date" type="date" value="${p?p.date:today()}" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Сумма</label><input id="pm_amount" type="number" inputmode="numeric" value="${p?(p.amount||''):''}" /></div>
+      <div class="field"><label>Период</label><input id="pm_period" value="${p?escapeHtml(p.period||''):''}" /></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Статус</label>
+        <select id="pm_paid">
+          <option value="1" ${p&&p.paid?'selected':''}>Оплачено</option>
+          <option value="0" ${p&&!p.paid?'selected':''}>Не оплачено</option>
+        </select>
+      </div>
+      <div class="field"><label>Чек</label>
+        <select id="pm_receipt">
+          <option value="1" ${p&&p.receiptIssued?'selected':''}>Выставлен</option>
+          <option value="0" ${p&&!p.receiptIssued?'selected':''}>Не выставлен</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Комментарий</label><textarea id="pm_notes">${p?escapeHtml(p.notes||''):''}</textarea></div>
+    <div class="actions">
+      ${p?`<button class="btn danger" onclick="deletePayment('${p.id}')">Удалить</button>`:''}
+      <button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="savePayment('${p?p.id:''}')">Сохранить</button>
+    </div>
+  `);
+};
+window.savePayment = function(id){
+  const studentId = document.getElementById('pm_student').value;
+  if(!studentId){ toast('error','Выбери ученика',''); return; }
+  const data = {
+    studentId, type: document.getElementById('pm_type').value,
+    date: document.getElementById('pm_date').value,
+    amount: Number(document.getElementById('pm_amount').value)||0,
+    period: document.getElementById('pm_period').value.trim(),
+    paid: document.getElementById('pm_paid').value==='1',
+    receiptIssued: document.getElementById('pm_receipt').value==='1',
+    notes: document.getElementById('pm_notes').value.trim()
+  };
+  if(id){
+    const p = state.payments.find(x=>x.id===id);
+    Object.assign(p, data);
+    if(p.autoGenerated && p.sourceLessonId){
+      p.autoGenerated = false;
+      const l = state.lessons.find(x=>x.id===p.sourceLessonId);
+      if(l){ l.paid = data.paid; l.receiptIssued = data.receiptIssued; }
+    }
+  }else{
+    state.payments.push(Object.assign({id:uid(),createdAt:Date.now()}, data));
+  }
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+  toast('success', id?'Обновлено':'Добавлено','');
+};
+window.deletePayment = function(id){
+  if(!confirm('Удалить?')) return;
+  const p = state.payments.find(x=>x.id===id);
+  if(p && p.autoGenerated && p.sourceLessonId){
+    const l = state.lessons.find(x=>x.id===p.sourceLessonId);
+    if(l) l.paid = false;
+  }
+  state.payments = state.payments.filter(x=>x.id!==id);
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+};
+function renderPayments(){
+  const q = document.getElementById('paymentsSearch').value.toLowerCase();
+  const list = state.payments.filter(p=>!q||studentName(p.studentId).toLowerCase().includes(q))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  const box = document.getElementById('paymentsList');
+  if(!list.length){ box.innerHTML = `<div class="empty">Нет оплат.</div>`; return; }
+  box.innerHTML = list.map(p=>`
+    <div class="card">
+      <div class="grow">
+        <h3>${escapeHtml(studentName(p.studentId))} — ${fmtMoney(p.amount)}
+          ${p.autoGenerated?'<span class="tag">авто</span>':''}
+        </h3>
+        <div class="meta">
+          📅 ${p.date} · <span class="tag">${PAY_TYPE_LABEL[p.type]||p.type}</span>
+          ${p.period?' · '+escapeHtml(p.period):''}
+          <span class="tag ${p.paid?'paid':'unpaid'}">${p.paid?'опл':'не опл'}</span>
+          <span class="tag ${p.receiptIssued?'paid':'warn'}">${p.receiptIssued?'чек':'нет чека'}</span>
+        </div>
+      </div>
+      <button class="btn ghost small" onclick="openPayment('${p.id}')">Изменить</button>
+    </div>`).join('');
+}
+
+/* ============ ТЕМЫ ============ */
+window.openTopic = function(id){
+  const t = id ? state.topics.find(x=>x.id===id) : null;
+  openModal(`
+    <h2>${t?'Редактировать':'Новая тема'}</h2>
+    <div class="field"><label>Название</label><input id="tp_title" value="${t?escapeHtml(t.title):''}" /></div>
+    <div class="field"><label>Описание</label><textarea id="tp_desc">${t?escapeHtml(t.desc||''):''}</textarea></div>
+    <div class="field">
+      <label>Материалы</label>
+      <input type="file" id="tp_files" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip" onchange="handleTopicFiles(event)" />
+    </div>
+    <div id="tp_materials_preview"></div>
+    <div class="actions">
+      ${t?`<button class="btn danger" onclick="deleteTopic('${t.id}')">Удалить</button>`:''}
+      <button class="btn ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn" onclick="saveTopic('${t?t.id:''}')">Сохранить</button>
+    </div>
+  `);
+  window._topicFilesBuffer = t && t.materials ? [...t.materials] : [];
+  renderTopicMaterialsPreview();
+};
+window.handleTopicFiles = function(ev){
+  const files = Array.from(ev.target.files);
+  let pending = files.length; if(!pending) return;
+  files.forEach(f=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      window._topicFilesBuffer.push({id: uid(), name: f.name, type: f.type, size: f.size, data: reader.result});
+      pending--; if(pending===0) renderTopicMaterialsPreview();
+    };
+    reader.onerror = ()=>{ toast('error','Ошибка чтения', f.name); pending--; };
+    reader.readAsDataURL(f);
+  });
+  ev.target.value = '';
+};
+function renderTopicMaterialsPreview(){
+  const box = document.getElementById('tp_materials_preview'); if(!box) return;
+  const arr = window._topicFilesBuffer || [];
+  if(!arr.length){ box.innerHTML=''; return; }
+  box.innerHTML = '<div class="materials">'+arr.map(m=>{
+    const isImg = m.type && m.type.startsWith('image/');
+    return `
+      <div class="material">
+        <button class="del" onclick="removeTopicFileTemp('${m.id}')">×</button>
+        ${isImg?`<img src="${m.data}" alt="" />`:`<div class="file-icon">📄</div>`}
+        <div class="name">${escapeHtml(m.name)}</div>
+      </div>`;
+  }).join('')+'</div>';
+}
+window.removeTopicFileTemp = function(id){
+  window._topicFilesBuffer = (window._topicFilesBuffer||[]).filter(x=>x.id!==id);
+  renderTopicMaterialsPreview();
+};
+window.saveTopic = function(id){
+  const title = document.getElementById('tp_title').value.trim();
+  if(!title){ toast('error','Введи название',''); return; }
+  const data = { title, desc: document.getElementById('tp_desc').value.trim(), materials: window._topicFilesBuffer || [] };
+  if(id) Object.assign(state.topics.find(x=>x.id===id), data);
+  else state.topics.push(Object.assign({id:uid(),createdAt:Date.now()}, data));
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+  toast('success', id?'Обновлено':'Добавлено', title);
+};
+window.deleteTopic = function(id){
+  if(!confirm('Удалить тему?')) return;
+  state.topics = state.topics.filter(x=>x.id!==id);
+  saveLocal(); renderAll(); schedulePush(); closeModal();
+};
+window.deleteTopicMaterial = function(topicId, matId){
+  const t = state.topics.find(x=>x.id===topicId); if(!t) return;
+  t.materials = (t.materials||[]).filter(m=>m.id!==matId);
+  saveLocal(); renderAll(); schedulePush();
+};
+window.openMaterial = function(topicId, matId){
+  const t = state.topics.find(x=>x.id===topicId); if(!t) return;
+  const m = (t.materials||[]).find(x=>x.id===matId); if(!m) return;
+  const w = window.open();
+  if(m.type && m.type.startsWith('image/')){
+    w.document.write(`<title>${escapeHtml(m.name)}</title><img src="${m.data}" style="max-width:100%">`);
+  }else{
+    const a = document.createElement('a'); a.href = m.data; a.download = m.name; a.click(); w.close();
+  }
+};
+function renderTopics(){
+  const q = document.getElementById('topicsSearch').value.toLowerCase();
+  const list = state.topics.filter(t=>!q||t.title.toLowerCase().includes(q))
+    .sort((a,b)=>a.title.localeCompare(b.title));
+  const box = document.getElementById('topicsList');
+  if(!list.length){ box.innerHTML = `<div class="empty">Нет тем.</div>`; return; }
+  box.innerHTML = list.map(t=>{
+    const count = state.lessons.filter(l=>l.topicId===t.id).length;
+    const mats = t.materials||[];
+    return `
+      <div class="card">
+        <div class="grow">
+          <h3>${escapeHtml(t.title)}</h3>
+          <div class="meta">Занятий: ${count} · Материалов: ${mats.length}</div>
+          ${t.desc?`<div class="meta">${escapeHtml(t.desc)}</div>`:''}
+          ${mats.length?`
+            <div class="materials">
+              ${mats.map(m=>{
+                const isImg = m.type && m.type.startsWith('image/');
+                return `
+                  <div class="material">
+                    <button class="del" onclick="deleteTopicMaterial('${t.id}','${m.id}')">×</button>
+                    ${isImg
+                      ? `<img src="${m.data}" onclick="openMaterial('${t.id}','${m.id}')" />`
+                      : `<div class="file-icon" style="cursor:pointer" onclick="openMaterial('${t.id}','${m.id}')">📄</div>`}
+                    <div class="name">${escapeHtml(m.name)}</div>
+                  </div>`;
+              }).join('')}
+            </div>`:''}
+        </div>
+        <button class="btn ghost small" onclick="openTopic('${t.id}')">Изменить</button>
+      </div>`;
+  }).join('');
+}
+
+/* ============ СВОДКА ============ */
+function setSumPeriod(mode){
+  const from = document.getElementById('sumFrom');
+  const to = document.getElementById('sumTo');
+  if(mode==='month'){
+    const d = new Date();
+    from.value = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10);
+    to.value = new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10);
+  }else{ from.value=''; to.value=''; }
+  renderSummary();
+}
+function renderSummary(){
+  const taxEl = document.getElementById('taxRate');
+  if(taxEl && Number(taxEl.value)!==state.taxRate) taxEl.value = state.taxRate;
+  const taxSetEl = document.getElementById('taxRateSettings');
+  if(taxSetEl && Number(taxSetEl.value)!==state.taxRate) taxSetEl.value = state.taxRate;
+  const from = document.getElementById('sumFrom').value;
+  const to = document.getElementById('sumTo').value;
+  const ops = [];
+  state.lessons.forEach(l=>{
+    if(from && l.date < from) return;
+    if(to && l.date > to) return;
+    if(l.type==='trial') return;
+    ops.push({
+      date: l.date, student: studentName(l.studentId), type: 'Занятие',
+      desc: (topicTitle(l.topicId)||'') + (l.notes?' — '+l.notes.slice(0,40):''),
+      amount: Number(l.price)||0, paid: !!l.paid, receipt: !!l.receiptIssued
+    });
+  });
+  state.payments.forEach(p=>{
+    if(from && p.date < from) return;
+    if(to && p.date > to) return;
+    if(p.autoGenerated && p.sourceLessonId) return;
+    ops.push({
+      date: p.date, student: studentName(p.studentId), type: PAY_TYPE_LABEL[p.type]||p.type,
+      desc: p.period || p.notes || '',
+      amount: Number(p.amount)||0, paid: !!p.paid, receipt: !!p.receiptIssued
+    });
+  });
+  ops.sort((a,b)=>b.date.localeCompare(a.date));
+  const box = document.getElementById('summaryTable');
+  if(!ops.length){ box.innerHTML = `<div class="empty">Операций нет.</div>`; return; }
+  const total = ops.reduce((a,o)=>a+o.amount,0);
+  const paid = ops.filter(o=>o.paid).reduce((a,o)=>a+o.amount,0);
+  const unpaid = total - paid;
+  const tax = paid * (Number(state.taxRate)||0) / 100;
+  const netProfit = paid - tax;
+  box.innerHTML = `
+    <div class="summary-cards">
+      <div class="sum-card"><div class="label">Всего</div><div class="value">${fmtMoney(total)}</div></div>
+      <div class="sum-card"><div class="label">Оплачено</div><div class="value ok">${fmtMoney(paid)}</div></div>
+      <div class="sum-card"><div class="label">К оплате</div><div class="value warn">${fmtMoney(unpaid)}</div></div>
+      <div class="sum-card"><div class="label">Налог (${state.taxRate}%)</div><div class="value warn small">${fmtMoney(tax)}</div></div>
+      <div class="sum-card"><div class="label">Чистая прибыль</div><div class="value ok">${fmtMoney(netProfit)}</div></div>
+      <div class="sum-card"><div class="label">Операций</div><div class="value">${ops.length}</div></div>
+    </div>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Дата</th><th>Ученик</th><th>Тип</th><th>Сумма</th><th>Опл</th><th>Чек</th></tr></thead>
+      <tbody>
+        ${ops.map(o=>`
+          <tr>
+            <td>${o.date}</td>
+            <td>${escapeHtml(o.student)}</td>
+            <td>${escapeHtml(o.type)}</td>
+            <td>${fmtMoney(o.amount)}</td>
+            <td><span class="tag ${o.paid?'paid':'unpaid'}">${o.paid?'да':'нет'}</span></td>
+            <td><span class="tag ${o.receipt?'paid':'warn'}">${o.receipt?'да':'нет'}</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+document.getElementById('sumFrom').addEventListener('change', renderSummary);
+document.getElementById('sumTo').addEventListener('change', renderSummary);
+
+/* ============ ДЕНЬГИ И ЧЕКИ ============ */
+window.switchSub = function(name, btn){
+  document.querySelectorAll('.subtabs button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.subpane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('sub-'+name).classList.add('active');
+  if(name==='receipts') renderReceipts();
+  if(name==='byStudent') renderMoney();
+};
+function setRcPeriod(mode){
+  const from = document.getElementById('rcFrom');
+  const to = document.getElementById('rcTo');
+  if(mode==='month'){
+    const d = new Date();
+    from.value = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10);
+    to.value = new Date(d.getFullYear(), d.getMonth()+1, 0).toISOString().slice(0,10);
+  }else{ from.value=''; to.value=''; }
+  renderReceipts();
+}
+function renderReceipts(){
+  const from = document.getElementById('rcFrom').value;
+  const to = document.getElementById('rcTo').value;
+  const items = state.lessons.filter(l=>{
+    if(l.type==='trial') return false;
+    if(from && l.date<from) return false;
+    if(to && l.date>to) return false;
+    return true;
+  }).sort((a,b)=>b.date.localeCompare(a.date));
+  const box = document.getElementById('receiptsTable');
+  if(!items.length){ box.innerHTML = `<div class="empty">Занятий нет.</div>`; return; }
+  const missing = items.filter(l=>!l.receiptIssued).length;
+  box.innerHTML = `
+    <div class="summary-cards">
+      <div class="sum-card"><div class="label">Занятий</div><div class="value">${items.length}</div></div>
+      <div class="sum-card"><div class="label">Чеков есть</div><div class="value ok">${items.length-missing}</div></div>
+      <div class="sum-card"><div class="label">Осталось</div><div class="value warn">${missing}</div></div>
+    </div>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Дата</th><th>Ученик</th><th>Сумма</th><th>Чек</th></tr></thead>
+      <tbody>
+        ${items.map(l=>`
+          <tr>
+            <td>${l.date}${l.time?' '+l.time:''}</td>
+            <td>${escapeHtml(studentName(l.studentId))}</td>
+            <td>${fmtMoney(l.price)}</td>
+            <td>
+              <label class="check-row" style="padding:0">
+                <input type="checkbox" ${l.receiptIssued?'checked':''}
+                  onchange="toggleReceipt('${l.id}',this.checked)" />
+                <span style="font-size:13px">${l.receiptIssued?'да':'выставить'}</span>
+              </label>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+document.getElementById('rcFrom').addEventListener('change', renderReceipts);
+document.getElementById('rcTo').addEventListener('change', renderReceipts);
+
+let moneyPeriod = 'month';
+window.setMoneyPeriod = function(p, btn){
+  moneyPeriod = p;
+  document.querySelectorAll('.period-bar button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderMoney();
+};
+function periodRange(p){
+  const now = new Date();
+  if(p==='week'){ const s=startOfWeek(now); return [ymd(s), ymd(addDays(s,6))]; }
+  if(p==='month') return [ymd(new Date(now.getFullYear(),now.getMonth(),1)),
+                          ymd(new Date(now.getFullYear(),now.getMonth()+1,0))];
+  if(p==='quarter'){ const q=Math.floor(now.getMonth()/3);
+    return [ymd(new Date(now.getFullYear(),q*3,1)),
+            ymd(new Date(now.getFullYear(),q*3+3,0))]; }
+  if(p==='year') return [ymd(new Date(now.getFullYear(),0,1)),
+                         ymd(new Date(now.getFullYear(),11,31))];
+  return ['',''];
+}
+function renderMoney(){
+  const [from,to] = periodRange(moneyPeriod);
+  let received = 0, expected = 0;
+  const byStudent = {};
+  state.lessons.forEach(l=>{
+    if(l.type==='trial') return;
+    if(from && l.date<from) return;
+    if(to && l.date>to) return;
+    const s = studentName(l.studentId);
+    if(!byStudent[s]) byStudent[s] = {received:0, expected:0, lessons:0};
+    byStudent[s].lessons++;
+    const price = Number(l.price)||0;
+    expected += price;
+    if(l.paid){ received += price; byStudent[s].received += price; }
+    else{ byStudent[s].expected += price; }
+  });
+  state.payments.forEach(p=>{
+    if(p.autoGenerated && p.sourceLessonId) return;
+    if(from && p.date<from) return;
+    if(to && p.date>to) return;
+    const s = studentName(p.studentId);
+    if(!byStudent[s]) byStudent[s] = {received:0, expected:0, lessons:0};
+    const amt = Number(p.amount)||0;
+    expected += amt;
+    if(p.paid){ received += amt; byStudent[s].received += amt; }
+    else{ byStudent[s].expected += amt; }
+  });
+  const tax = received * (Number(state.taxRate)||0) / 100;
+  const net = received - tax;
+  document.getElementById('moneyCards').innerHTML = `
+    <div class="sum-card"><div class="label">Получено</div><div class="value ok">${fmtMoney(received)}</div></div>
+    <div class="sum-card"><div class="label">Ожидается</div><div class="value warn">${fmtMoney(expected)}</div></div>
+    <div class="sum-card"><div class="label">Налог (${state.taxRate}%)</div><div class="value warn small">${fmtMoney(tax)}</div></div>
+    <div class="sum-card"><div class="label">Чистая прибыль</div><div class="value ok">${fmtMoney(net)}</div></div>
+    <div class="sum-card"><div class="label">Всего (грязными)</div><div class="value small">${fmtMoney(received+expected)}</div></div>
+    <div class="sum-card"><div class="label">Период</div><div class="value small">${from||'—'} — ${to||'—'}</div></div>
+  `;
+  const rows = Object.entries(byStudent).sort((a,b)=>(b[1].received+b[1].expected)-(a[1].received+a[1].expected));
+  const box = document.getElementById('moneyTable');
+  if(!rows.length){ box.innerHTML = `<div class="empty">За период данных нет.</div>`; return; }
+  box.innerHTML = `
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Ученик</th><th>Зан.</th><th>Получено</th><th>Ожид.</th><th>Итого</th></tr></thead>
+      <tbody>
+        ${rows.map(([name,v])=>`
+          <tr>
+            <td>${escapeHtml(name)}</td>
+            <td>${v.lessons}</td>
+            <td>${fmtMoney(v.received)}</td>
+            <td>${fmtMoney(v.expected)}</td>
+            <td>${fmtMoney(v.received+v.expected)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+
+/* ============ НАПОМИНАНИЯ РОДИТЕЛЯМ ============ */
+function ensureParentReminders(){
+  const m = curMonth();
+  let changed = false;
+  state.students.forEach(s=>{
+    const hasLessons = state.lessons.some(l=>l.studentId===s.id);
+    if(!hasLessons) return;
+    const exists = state.parentReminders.find(r=>r.studentId===s.id && r.month===m);
+    if(!exists){
+      state.parentReminders.push({id: uid(), studentId: s.id, month: m, sent: false, sentAt: null, note: ''});
+      changed = true;
+    }
+  });
+  if(changed) saveLocal();
+}
+function renderReminders(){
+  ensureParentReminders();
+  const m = curMonth();
+  const cur = state.parentReminders.filter(r=>r.month===m)
+    .sort((a,b)=>{
+      const A = state.students.find(s=>s.id===a.studentId);
+      const B = state.students.find(s=>s.id===b.studentId);
+      return (A?A.name:'').localeCompare(B?B.name:'');
+    });
+  const box = document.getElementById('remindersList');
+  if(!cur.length){ box.innerHTML = `<div class="empty">Пока нечего напоминать.</div>`; }
+  else {
+    box.innerHTML = cur.map(r=>{
+      const s = state.students.find(x=>x.id===r.studentId); if(!s) return '';
+      const parent = s.parentName || 'родителю';
+      const contact = s.parentPhone ? ' ('+escapeHtml(s.parentPhone)+')' : '';
+      return `
+        <div class="hint">
+          <div class="grow">
+            <h4>${r.sent?'✔ Связались':'✉️ Напишите родителям '+escapeHtml(parent)+' об успехах '+escapeHtml(s.name)+contact}</h4>
+            <div class="meta">Месяц: ${monthLabel(r.month)}${r.sentAt?' · '+r.sentAt:''}</div>
+          </div>
+          <label class="check-row" style="padding:0">
+            <input type="checkbox" ${r.sent?'checked':''}
+              onchange="toggleParentReminder('${r.id}',this.checked)" />
+            <span style="font-size:13px">Связались</span>
+          </label>
+        </div>`;
+    }).join('');
+  }
+  const hist = state.parentReminders.filter(r=>r.sent).sort((a,b)=>(b.sentAt||'').localeCompare(a.sentAt||''));
+  const hbox = document.getElementById('remindersHistory');
+  if(!hist.length){ hbox.innerHTML = `<div class="empty" style="padding:20px">Пока пусто.</div>`; }
+  else {
+    hbox.innerHTML = hist.slice(0,30).map(r=>{
+      const s = state.students.find(x=>x.id===r.studentId);
+      return `<div class="card"><div class="grow">
+        <h3>${s?escapeHtml(s.name):'— удалён —'}</h3>
+        <div class="meta">${monthLabel(r.month)} · ${r.sentAt||''}</div>
+      </div></div>`;
+    }).join('');
+  }
+}
+window.toggleParentReminder = function(id, checked){
+  const r = state.parentReminders.find(x=>x.id===id); if(!r) return;
+  r.sent = checked;
+  r.sentAt = checked ? new Date().toLocaleString('ru-RU') : null;
+  saveLocal(); renderAll(); schedulePush();
+  if(checked) toast('success','Отмечено','');
+};
+function updateRemBadge(){
+  const m = curMonth();
+  const need = state.parentReminders.filter(r=>r.month===m && !r.sent).length;
+  const bD = document.getElementById('remBadgeD');
+  const bM = document.getElementById('remBadgeM');
+  [bD, bM].forEach(b=>{
+    if(!b) return;
+    if(need>0){ b.textContent = need; b.style.display=''; }
+    else b.style.display='none';
+  });
+}
+
+/* ============ АВТО-УВЕДОМЛЕНИЯ ============ */
+const shownNotifs = new Set();
+function checkTimeNotifications(){
+  if(!notifPrefs.enabled) return;
+  const now = new Date();
+  const nowDate = ymd(now);
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  state.lessons.forEach(l=>{
+    if(l.date !== nowDate) return;
+    if(!l.time) return;
+    const lMin = timeToMinutes(l.time);
+    const diff = lMin - nowMin;
+    if(diff >= 25 && diff <= 35){
+      const key = 'soon-'+l.id;
+      if(!shownNotifs.has(key)){
+        shownNotifs.add(key);
+        toast('info','Скоро занятие', studentName(l.studentId)+' в '+l.time);
+      }
+    }
+  });
+  if(now.getHours() >= 21){
+    const pending = state.lessons.filter(l=>l.date === nowDate && l.type!=='trial' && l.paid && !l.receiptIssued);
+    if(pending.length){
+      const key = 'receipt-'+nowDate;
+      if(!shownNotifs.has(key)){
+        shownNotifs.add(key);
+        toast('info','Не выставлены чеки', 'Сегодня: '+pending.length);
+      }
+    }
+  }
+  const m = curMonth();
+  const parents = state.parentReminders.filter(r=>r.month===m && !r.sent).length;
+  if(parents > 0){
+    const key = 'parents-'+m;
+    if(!shownNotifs.has(key)){
+      shownNotifs.add(key);
+      toast('info','Родители', 'Не связались: '+parents);
+    }
+  }
+}
+
+/* ============ ВКЛАДКИ ============ */
+const TABS = ['calendar','students','lessons','payments','topics','summary','money','reminders','settings'];
+function switchTab(tab){
+  if(tab === 'more'){
+    // на мобильном «Ещё» открывает модалку с оставшимися разделами
+    openModal(`
+      <h2>Разделы</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn ghost" style="height:60px" onclick="switchTab('payments');closeModal()">💰 Оплаты</button>
+        <button class="btn ghost" style="height:60px" onclick="switchTab('topics');closeModal()">📚 Темы</button>
+        <button class="btn ghost" style="height:60px" onclick="switchTab('summary');closeModal()">📊 Сводка</button>
+        <button class="btn ghost" style="height:60px" onclick="switchTab('settings');closeModal()">⚙️ Настройки</button>
+      </div>
+      <div class="actions"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>
+    `);
+    return;
+  }
+  document.querySelectorAll('nav.desktop button, nav.mobile button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('nav.desktop button, nav.mobile button').forEach(b=>{
+    if(b.dataset.tab === tab) b.classList.add('active');
+  });
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  const sec = document.getElementById(tab);
+  if(sec) sec.classList.add('active');
+  // обновляем данные
+  if(tab==='calendar') renderCalendar();
+  if(tab==='summary') renderSummary();
+  if(tab==='money'){ renderMoney(); renderReceipts(); }
+  if(tab==='reminders') renderReminders();
+  if(tab==='lessons') renderLessons();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+window.switchTab = switchTab;
+
+document.querySelectorAll('nav.desktop button, nav.mobile button').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchTab(btn.dataset.tab));
+});
+
+['studentsSearch','lessonsSearch','paymentsSearch','topicsSearch'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', ()=>{
+    if(id==='studentsSearch') renderStudents();
+    if(id==='lessonsSearch') renderLessons();
+    if(id==='paymentsSearch') renderPayments();
+    if(id==='topicsSearch') renderTopics();
+  });
+});
+
+function renderAll(){
+  renderStudents();
+  renderLessons();
+  renderPayments();
+  renderTopics();
+  renderSummary();
+  renderReceipts();
+  renderMoney();
+  renderCalendar();
+  renderReminders();
+  updateRemBadge();
+}
+
+/* ============ СТАРТ ============ */
+(async function init(){
+  await loadLocal();
+  renderAll();
+  setSumPeriod('month');
+  setRcPeriod('month');
+
+  const tr = document.getElementById('taxRate'); if(tr) tr.value = state.taxRate;
+  const trs = document.getElementById('taxRateSettings'); if(trs) trs.value = state.taxRate;
+  const ne = document.getElementById('notifEnabled'); if(ne) ne.checked = notifPrefs.enabled;
+  const ns = document.getElementById('notifSound'); if(ns) ns.checked = notifPrefs.sound;
+
+  if(sync.enabled){
+    const tEl = document.getElementById('ghToken'); if(tEl) tEl.value = sync.token;
+    const gEl = document.getElementById('ghGist'); if(gEl) gEl.value = sync.gistId;
+    setSyncStatus('синхр...','');
+    pullFromGist();
+    setInterval(pullFromGist, 20000);
+  }else{
+    setSyncStatus('локально','');
+  }
+
+  setInterval(checkTimeNotifications, 60000);
+  setTimeout(checkTimeNotifications, 3000);
+})();
+</script>
+</body>
+</html>
